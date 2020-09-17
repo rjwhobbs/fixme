@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="fixme-router" />
+        <module name="fixme-broker" />
       </profile>
     </annotationProcessing>
   </component>
