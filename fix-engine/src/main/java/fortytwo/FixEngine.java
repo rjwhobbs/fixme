@@ -5,19 +5,61 @@ import fortytwo.fixexceptions.FixFormatException;
 
 public class FixEngine {
 
+//  Byte string will contain the SOH char
   private byte[] rawFixMessageBytes;
+//  String object will contain our printable delimiter
   private String fixMessageString;
+
+  public String routerInternalID;
+  public String messageType;
+  public String senderCompID;
+  public String targetCompID;
 
   public FixEngine(String message) {
     this.rawFixMessageBytes = insertSOHDelimiter(message.getBytes());
     this.fixMessageString = message;
   }
 
-//  Use this constructor when you are getting a raw byte string from the buffer
-//  that should contain the SOH delimiter.
+//  Use this constructor when you are getting a raw byte string from the buffer,
+//  it is assumed that it should contain the SOH delimiter.
+//  It is also assumed that it will contain the checkSum as it is coming from a buffer read().
   public FixEngine(byte[] message) {
     this.rawFixMessageBytes = message;
     this.fixMessageString = new String(insertPrintableDelimiter(message));
+  }
+
+  public void parseRawBytes() throws FixFormatException {
+    int i = 0;
+    int len = this.rawFixMessageBytes.length;
+    int tagsParsed = 0;
+    String tempTag;
+    String tempValue;
+
+    while (i < len) {
+      tempTag = "";
+      tempValue = "";
+      while (this.rawFixMessageBytes[i] != 1) {
+        while (this.rawFixMessageBytes[i] != '=') {
+          tempTag = tempTag + (char)this.rawFixMessageBytes[i];
+          i++;
+        }
+        if (this.rawFixMessageBytes[i] == '=') {
+          i++;
+          while (this.rawFixMessageBytes[i] != 1) {
+            tempValue = tempValue + (char)this.rawFixMessageBytes[i];
+            i++;
+          }
+        }
+        else {
+          throw new FixFormatException("FIX message is missing value on tag: " + tempTag);
+        }
+      }
+      System.out.println(tempTag);
+      System.out.println(tempValue);
+      if (i < len) {
+        i++;
+      }
+    }
   }
 
   public void checkFixFormat() throws FixFormatException {
@@ -57,7 +99,7 @@ public class FixEngine {
     return arr;
   }
 
-  public String createCheckSum(String message) {
+  public String createCheckSumString(String message) {
     String checkSumString;
     int checkSum;
     int originalTotal;
@@ -83,7 +125,9 @@ public class FixEngine {
   public void appendCheckSumToString() {
     this.fixMessageString =
             this.fixMessageString
-                    + "10=" + createCheckSum(this.fixMessageString) + "|";
+                    + FixConstants.checkSum + "="
+                    + createCheckSumString(this.fixMessageString)
+                    + FixConstants.printableDelimiter;
   }
 
   public byte[] getRawFixMessageBytes() {
@@ -112,6 +156,7 @@ class TestEngine {
 
     try {
       System.out.println(fe.getFixMessageString());
+      fe.parseRawBytes();
       fe.appendCheckSumToString();
       System.out.println(fe.getFixMessageString());
       fe.checkFixFormat();
