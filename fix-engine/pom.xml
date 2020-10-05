@@ -49,7 +49,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>fortytwo.App</mainClass>
+                            <mainClass>fortytwo.FixEngine</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
