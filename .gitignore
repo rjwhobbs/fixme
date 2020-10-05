@@ -9,3 +9,4 @@ httpRequests/
 target/
 *.iml
 .idea/
+.vscode/
