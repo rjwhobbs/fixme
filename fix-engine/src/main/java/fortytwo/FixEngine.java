@@ -11,7 +11,7 @@ public class FixEngine {
   private String fixMessageString;
 
   public String routerInternalID;
-  public String messageType;
+  public String msgType;
   public String senderCompID;
   public String targetCompID;
 
@@ -125,7 +125,7 @@ public class FixEngine {
   public void appendCheckSumToString() {
     this.fixMessageString =
             this.fixMessageString
-                    + FixConstants.checkSum + "="
+                    + FixConstants.checkSumTag + "="
                     + createCheckSumString(this.fixMessageString)
                     + FixConstants.printableDelimiter;
   }
