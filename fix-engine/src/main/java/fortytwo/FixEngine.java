@@ -1,6 +1,31 @@
 package fortytwo;
 
+import fortytwo.constants.FixConstants;
+import fortytwo.fixexceptions.FixFormatException;
+
 public class FixEngine {
+
+  private byte[] rawFixMessageBytes;
+  private String fixMessageString;
+
+  public FixEngine(String message) {
+    this.rawFixMessageBytes = insertSOHDelimiter(message.getBytes());
+    this.fixMessageString = message;
+  }
+
+//  Use this constructor when you are getting a raw byte string from the buffer
+//  that should contain the SOH delimiter.
+  public FixEngine(byte[] message) {
+    this.rawFixMessageBytes = message;
+    this.fixMessageString = new String(insertPrintableDelimiter(message));
+  }
+
+  public void checkFixFormat() throws FixFormatException {
+    // This is checking if the byte string ends with a SOH char
+    if (rawFixMessageBytes[rawFixMessageBytes.length - 1] != 1) {
+      throw new FixFormatException("Error in FIX message format, one or more delimiters is missing");
+    }
+  }
 
   public static int sum(byte[] arr) {
     int sum = 0;
@@ -12,10 +37,20 @@ public class FixEngine {
     return sum;
   }
 
-  public static byte[] insertSeparator(byte[] arr) {
+  public static byte[] insertPrintableDelimiter(byte[] arr) {
+    for (int i = 0; i < arr.length; i++) {
+      if (arr[i] == 1) {
+        arr[i] = FixConstants.printableDelimiter;
+      }
+    }
+
+    return arr;
+  }
+
+  public static byte[] insertSOHDelimiter(byte[] arr) {
 
     for (int i = 0; i < arr.length; i++) {
-      if (arr[i] == '|') {
+      if (arr[i] == FixConstants.printableDelimiter) {
         arr[i] = 1;
       }
     }
@@ -23,12 +58,11 @@ public class FixEngine {
   }
 
   public String createCheckSum(String message) {
-//     "24242=1|35=V|";
     String checkSumString;
     int checkSum;
     int originalTotal;
 
-    originalTotal = this.sum(this.insertSeparator(message.getBytes()));
+    originalTotal = this.sum(this.insertSOHDelimiter(message.getBytes()));
     checkSum = originalTotal % 256;
     checkSumString = Integer.toString(checkSum);
 
@@ -46,8 +80,18 @@ public class FixEngine {
     return checkSumString;
   }
 
-  public String appendCheckSumToString(String message) {
-    return message + "10=" + createCheckSum(message) + "|";
+  public void appendCheckSumToString() {
+    this.fixMessageString =
+            this.fixMessageString
+                    + "10=" + createCheckSum(this.fixMessageString) + "|";
+  }
+
+  public byte[] getRawFixMessageBytes() {
+    return rawFixMessageBytes;
+  }
+
+  public String getFixMessageString() {
+    return fixMessageString;
   }
 
   public void printRawBytes() {
@@ -64,7 +108,17 @@ public class FixEngine {
 
 class TestEngine {
   public static void main(String[] args) {
-    FixEngine fe = new FixEngine();
-    System.out.println(fe.appendCheckSumToString("24242=1|35=V|"));
+    FixEngine fe = new FixEngine("24242=1|35=V|");
+
+    try {
+      System.out.println(fe.getFixMessageString());
+      fe.appendCheckSumToString();
+      System.out.println(fe.getFixMessageString());
+      fe.checkFixFormat();
+    }
+    catch (FixFormatException e) {
+      System.out.println(e);
+    }
+
   }
 }
