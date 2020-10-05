@@ -22,7 +22,7 @@ public class FixEngine {
     return arr;
   }
 
-  public String insertCheckSum(String message) {
+  public String createCheckSum(String message) {
 //     "24242=1|35=V|";
     String checkSumString;
     int checkSum;
@@ -46,6 +46,10 @@ public class FixEngine {
     return checkSumString;
   }
 
+  public String appendCheckSumToString(String message) {
+    return message + "10=" + createCheckSum(message) + "|";
+  }
+
   public void printRawBytes() {
   }
 
@@ -61,6 +65,6 @@ public class FixEngine {
 class TestEngine {
   public static void main(String[] args) {
     FixEngine fe = new FixEngine();
-    System.out.println(fe.insertCheckSum("24242=1|35=V|"));
+    System.out.println(fe.appendCheckSumToString("24242=1|35=V|"));
   }
 }
