@@ -69,6 +69,16 @@ public class FixMessage {
     }
   }
 
+  /*
+  market {
+    FixMessage fm = new FM(...);
+    if (fm.getMsgType = FixCons.DataRequest) {
+      // show data
+    }
+    el ( == Cons.SingleOrder)
+  }
+  */
+
   public void parseTagValueLists() throws FixFormatException {
 
     if ((tags.size() == 0 || values.size() == 0) || (tags.size() != values.size())) {
@@ -97,7 +107,7 @@ public class FixMessage {
     this.fixMessageString =
             this.fixMessageString
                     + FixConstants.checkSumTag + "="
-                    + FixUtils.createCheckSumString(this.fixMessageString)
+                    + FixUtils.createCheckSumString(this.rawFixMessageBytes)
                     + FixConstants.printableDelimiter;
   }
 

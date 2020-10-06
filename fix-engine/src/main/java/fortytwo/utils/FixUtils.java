@@ -30,12 +30,12 @@ public class FixUtils {
     return sum;
   }
 
-  public static String createCheckSumString(String message) {
+  public static String createCheckSumString(byte[] message) {
     String checkSumString;
     int checkSum;
     int originalTotal;
 
-    originalTotal = FixUtils.byteSum(FixUtils.insertSOHDelimiter(message.getBytes()));
+    originalTotal = FixUtils.byteSum(message);
     checkSum = originalTotal % 256;
     checkSumString = Integer.toString(checkSum);
 
