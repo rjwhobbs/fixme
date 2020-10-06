@@ -2,9 +2,11 @@ package fortytwo;
 
 import fortytwo.constants.FixConstants;
 import fortytwo.fixexceptions.FixFormatException;
+import fortytwo.fixexceptions.FixMessageException;
 import fortytwo.utils.FixUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class FixMessage {
@@ -22,6 +24,8 @@ public class FixMessage {
   private String sideValue = null;
   private String symbol = null;
   private String symbolValue = null;
+
+  public HashMap<String, String> msgMap = new HashMap<>();
 
   private List<String> tags = new ArrayList<>();
   private List<String> values = new ArrayList<>();
@@ -75,15 +79,21 @@ public class FixMessage {
       throw new FixFormatException("One or more tag value pairs are missing.");
     }
     if (!tags.get(0).equals(FixConstants.internalSenderIDTag)) {
-      throw new FixFormatException("FIX message must start with the internal router ID.");
+      throw new FixFormatException("FIX message must start with the internal sender ID.");
     }
 
     for (int i = 0; i < tags.size(); i++) {
       if(tags.get(i).isEmpty() || values.get(i).isEmpty()) {
         throw new FixFormatException("One or more tag value pairs are missing.");
       }
+      msgMap.put(tags.get(i), values.get(i));
     }
+  }
 
+  public void validateMsgMap() throws FixMessageException {
+    if (msgMap.get(FixConstants.internalTargetIDTag) == null) {
+      throw new FixMessageException("FIX message must contain an internal target ID.");
+    }
   }
 
   public void checkFixFormat() throws FixFormatException {
