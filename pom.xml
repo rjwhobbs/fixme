@@ -12,6 +12,7 @@
     <module>fixme-router</module>
     <module>fixme-broker</module>
     <module>fix-engine</module>
+    <module>fixme-market</module>
   </modules>
 
   <name>fixeme_one</name>
