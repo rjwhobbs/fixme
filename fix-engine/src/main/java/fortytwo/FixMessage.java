@@ -122,15 +122,7 @@ public class FixMessage {
     System.arraycopy(checkSumBytes, 0, tempByteArr, rawFixMessageBytes.length + 3, 3);
     tempByteArr[tempByteArr.length - 1] = FixConstants.SOHDelimiter;
 
-    for (int i = 0; i < tempByteArr.length; i++) {
-      if (tempByteArr[i] == 1) {
-        System.out.print("|");
-      }
-      else {
-        System.out.print((char)tempByteArr[i]);
-      }
-    }
-    System.out.println();
+    this.rawFixMessageBytes = tempByteArr;
   }
 
   public byte[] getRawFixMessageBytes() {
