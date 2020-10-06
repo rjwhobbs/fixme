@@ -6,7 +6,8 @@ public class FixConstants {
   public final static char SOHDelimiter = 1;
 
   // tags
-  public final static String internalRouterIDTag = "24242";
+  public final static String internalSenderIDTag = "24242";
+  public final static String internalTargetIDTag = "42424";
   public final static String msgTypeTag = "35";
   public final static String senderCompIDTag = "49";
   public final static String targetCompIDTag = "56";

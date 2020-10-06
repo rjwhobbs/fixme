@@ -69,22 +69,12 @@ public class FixMessage {
     }
   }
 
-  /*
-  market {
-    FixMessage fm = new FM(...);
-    if (fm.getMsgType = FixCons.DataRequest) {
-      // show data
-    }
-    el ( == Cons.SingleOrder)
-  }
-  */
-
   public void parseTagValueLists() throws FixFormatException {
 
     if ((tags.size() == 0 || values.size() == 0) || (tags.size() != values.size())) {
       throw new FixFormatException("One or more tag value pairs are missing.");
     }
-    if (!tags.get(0).equals(FixConstants.internalRouterIDTag)) {
+    if (!tags.get(0).equals(FixConstants.internalSenderIDTag)) {
       throw new FixFormatException("FIX message must start with the internal router ID.");
     }
 
