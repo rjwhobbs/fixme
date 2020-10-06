@@ -3,6 +3,9 @@ package fortytwo;
 import fortytwo.constants.FixConstants;
 import fortytwo.fixexceptions.FixFormatException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FixEngine {
 
 //  Byte string will contain the SOH char
@@ -10,10 +13,13 @@ public class FixEngine {
 //  String object will contain our printable delimiter
   private String fixMessageString;
 
-  public String routerInternalID;
-  public String msgType;
-  public String senderCompID;
-  public String targetCompID;
+  private String internalRouterlID = null;
+  private String msgType = null;
+  private String senderCompID = null;
+  private String targetCompID = null;
+
+  private List<String> tags = new ArrayList<>();
+  private List<String> values = new ArrayList<>();
 
   public FixEngine(String message) {
     this.rawFixMessageBytes = insertSOHDelimiter(message.getBytes());
@@ -28,43 +34,56 @@ public class FixEngine {
     this.fixMessageString = new String(insertPrintableDelimiter(message));
   }
 
-  public void parseRawBytes() throws FixFormatException {
+  public void parseRawBytes() {
     int i = 0;
     int len = this.rawFixMessageBytes.length;
-    int tagsParsed = 0;
     String tempTag;
     String tempValue;
 
     while (i < len) {
       tempTag = "";
       tempValue = "";
-      while (this.rawFixMessageBytes[i] != 1) {
+      while (this.rawFixMessageBytes[i] != FixConstants.SOHDelimiter) {
         while (this.rawFixMessageBytes[i] != '=') {
           tempTag = tempTag + (char)this.rawFixMessageBytes[i];
           i++;
         }
         if (this.rawFixMessageBytes[i] == '=') {
           i++;
-          while (this.rawFixMessageBytes[i] != 1) {
+          while (this.rawFixMessageBytes[i] != FixConstants.SOHDelimiter) {
             tempValue = tempValue + (char)this.rawFixMessageBytes[i];
             i++;
           }
         }
-        else {
-          throw new FixFormatException("FIX message is missing value on tag: " + tempTag);
-        }
       }
-      System.out.println(tempTag);
-      System.out.println(tempValue);
+      tags.add(tempTag);
+      values.add(tempValue);
       if (i < len) {
         i++;
       }
     }
   }
 
+  public void parseTagValueLists() throws FixFormatException {
+
+    if ((tags.size() == 0 || values.size() == 0) || (tags.size() != values.size())) {
+      throw new FixFormatException("One or more tag value pairs are missing.");
+    }
+    if (!tags.get(0).equals(FixConstants.internalRouterIDTag)) {
+      throw new FixFormatException("FIX message must start with the internal router ID.");
+    }
+
+    for (int i = 0; i < tags.size(); i++) {
+      if(tags.get(i).isEmpty() || values.get(i).isEmpty()) {
+        throw new FixFormatException("One or more tag value pairs are missing.");
+      }
+    }
+
+  }
+
   public void checkFixFormat() throws FixFormatException {
     // This is checking if the byte string ends with a SOH char
-    if (rawFixMessageBytes[rawFixMessageBytes.length - 1] != 1) {
+    if (rawFixMessageBytes[rawFixMessageBytes.length - 1] != FixConstants.SOHDelimiter) {
       throw new FixFormatException("Error in FIX message format, one or more delimiters is missing");
     }
   }
@@ -81,7 +100,7 @@ public class FixEngine {
 
   public static byte[] insertPrintableDelimiter(byte[] arr) {
     for (int i = 0; i < arr.length; i++) {
-      if (arr[i] == 1) {
+      if (arr[i] == FixConstants.SOHDelimiter) {
         arr[i] = FixConstants.printableDelimiter;
       }
     }
@@ -93,7 +112,7 @@ public class FixEngine {
 
     for (int i = 0; i < arr.length; i++) {
       if (arr[i] == FixConstants.printableDelimiter) {
-        arr[i] = 1;
+        arr[i] = FixConstants.SOHDelimiter;
       }
     }
     return arr;

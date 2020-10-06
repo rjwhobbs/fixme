@@ -3,9 +3,10 @@ package fortytwo.constants;
 public class FixConstants {
   // Delimiter
   public final static char printableDelimiter = '|';
+  public final static char SOHDelimiter = 1;
 
   // tags
-  public final static String internalIDTag = "24242";
+  public final static String internalRouterIDTag = "24242";
   public final static String msgTypeTag = "35";
   public final static String senderCompIDTag = "49";
   public final static String targetCompIDTag = "56";
