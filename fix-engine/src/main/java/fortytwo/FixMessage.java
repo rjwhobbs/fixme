@@ -2,11 +2,12 @@ package fortytwo;
 
 import fortytwo.constants.FixConstants;
 import fortytwo.fixexceptions.FixFormatException;
+import fortytwo.utils.FixUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FixEngine {
+public class FixMessage {
 
 //  Byte string will contain the SOH char
   private byte[] rawFixMessageBytes;
@@ -25,17 +26,17 @@ public class FixEngine {
   private List<String> tags = new ArrayList<>();
   private List<String> values = new ArrayList<>();
 
-  public FixEngine(String message) {
-    this.rawFixMessageBytes = insertSOHDelimiter(message.getBytes());
+  public FixMessage(String message) {
+    this.rawFixMessageBytes = FixUtils.insertSOHDelimiter(message.getBytes());
     this.fixMessageString = message;
   }
 
 //  Use this constructor when you are getting a raw byte string from the buffer,
 //  it is assumed that it should contain the SOH delimiter.
 //  It is also assumed that it will contain the checkSum as it is coming from a buffer read().
-  public FixEngine(byte[] message) {
+  public FixMessage(byte[] message) {
     this.rawFixMessageBytes = message;
-    this.fixMessageString = new String(insertPrintableDelimiter(message));
+    this.fixMessageString = new String(FixUtils.insertPrintableDelimiter(message));
   }
 
   public void parseRawBytes() {
@@ -92,64 +93,11 @@ public class FixEngine {
     }
   }
 
-  public static int byteSum(byte[] arr) {
-    int sum = 0;
-
-    for (int i = 0; i < arr.length; i++) {
-      sum += arr[i];
-    }
-
-    return sum;
-  }
-
-  public static byte[] insertPrintableDelimiter(byte[] arr) {
-    for (int i = 0; i < arr.length; i++) {
-      if (arr[i] == FixConstants.SOHDelimiter) {
-        arr[i] = FixConstants.printableDelimiter;
-      }
-    }
-
-    return arr;
-  }
-
-  public static byte[] insertSOHDelimiter(byte[] arr) {
-
-    for (int i = 0; i < arr.length; i++) {
-      if (arr[i] == FixConstants.printableDelimiter) {
-        arr[i] = FixConstants.SOHDelimiter;
-      }
-    }
-    return arr;
-  }
-
-  public String createCheckSumString(String message) {
-    String checkSumString;
-    int checkSum;
-    int originalTotal;
-
-    originalTotal = this.byteSum(this.insertSOHDelimiter(message.getBytes()));
-    checkSum = originalTotal % 256;
-    checkSumString = Integer.toString(checkSum);
-
-    switch (checkSumString.length()) {
-      case 1:
-        checkSumString = "00" + checkSumString;
-        break;
-      case 2:
-        checkSumString = "0" + checkSumString;
-        break;
-      default:
-        break;
-    }
-
-    return checkSumString;
-  }
-
   public void appendCheckSumToString() {
     this.fixMessageString =
             this.fixMessageString
                     + FixConstants.checkSumTag + "="
-                    + createCheckSumString(this.fixMessageString)
+                    + FixUtils.createCheckSumString(this.fixMessageString)
                     + FixConstants.printableDelimiter;
   }
 
@@ -163,22 +111,14 @@ public class FixEngine {
 
   public void printRawBytes() {
   }
-
-  public static void testOne() {
-    System.out.println("Hello form engine test one");
-  }
-
-  public void testTwo() {
-    System.out.println("Hello form engine test two");
-  }
 }
 
 class TestEngine {
   public static void main(String[] args) {
-    FixEngine fm0 = new FixEngine("24242=1|35=V|");
+    FixMessage fm0 = new FixMessage("24242=1|35=V|");
     // Test cases without '=' char
-    FixEngine fm1 = new FixEngine("24242=1|35|");
-    FixEngine fm2 = new FixEngine("24242|35=V|");
+    FixMessage fm1 = new FixMessage("24242=1|35|");
+    FixMessage fm2 = new FixMessage("24242|35=V|");
 
 
     try {
