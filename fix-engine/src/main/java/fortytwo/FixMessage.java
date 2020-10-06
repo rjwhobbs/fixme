@@ -111,6 +111,28 @@ public class FixMessage {
                     + FixConstants.printableDelimiter;
   }
 
+  public void appendCheckSumToBytes() {
+
+    byte[] tempByteArr = new byte[rawFixMessageBytes.length + 7];
+    byte[] checkSumTag = (FixConstants.checkSumTag + "=").getBytes();
+    byte[] checkSumBytes = FixUtils.createCheckSumString(rawFixMessageBytes).getBytes();
+
+    System.arraycopy(rawFixMessageBytes, 0, tempByteArr, 0, rawFixMessageBytes.length);
+    System.arraycopy(checkSumTag, 0, tempByteArr, rawFixMessageBytes.length, 3);
+    System.arraycopy(checkSumBytes, 0, tempByteArr, rawFixMessageBytes.length + 3, 3);
+    tempByteArr[tempByteArr.length - 1] = FixConstants.SOHDelimiter;
+
+    for (int i = 0; i < tempByteArr.length; i++) {
+      if (tempByteArr[i] == 1) {
+        System.out.print("|");
+      }
+      else {
+        System.out.print((char)tempByteArr[i]);
+      }
+    }
+    System.out.println();
+  }
+
   public byte[] getRawFixMessageBytes() {
     return rawFixMessageBytes;
   }
@@ -134,8 +156,10 @@ class TestEngine {
     try {
       System.out.println(fm0.getFixMessageString());
       fm0.parseRawBytes();
-      fm0.appendCheckSumToString();
-      System.out.println(fm0.getFixMessageString());
+//      fm0.appendCheckSumToString();
+      fm0.appendCheckSumToBytes();
+
+//      System.out.println(fm0.getFixMessageString());
       fm0.checkFixFormat();
     }
     catch (FixFormatException e) {
