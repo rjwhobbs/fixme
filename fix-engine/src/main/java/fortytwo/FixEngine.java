@@ -13,10 +13,14 @@ public class FixEngine {
 //  String object will contain our printable delimiter
   private String fixMessageString;
 
-  private String internalRouterlID = null;
+  private String internalRouterID = null;
   private String msgType = null;
   private String senderCompID = null;
   private String targetCompID = null;
+  private String side = null;
+  private String sideValue = null;
+  private String symbol = null;
+  private String symbolValue = null;
 
   private List<String> tags = new ArrayList<>();
   private List<String> values = new ArrayList<>();
@@ -44,7 +48,7 @@ public class FixEngine {
       tempTag = "";
       tempValue = "";
       while (this.rawFixMessageBytes[i] != FixConstants.SOHDelimiter) {
-        while (this.rawFixMessageBytes[i] != '=') {
+        while (this.rawFixMessageBytes[i] != '=' && this.rawFixMessageBytes[i] != FixConstants.SOHDelimiter) {
           tempTag = tempTag + (char)this.rawFixMessageBytes[i];
           i++;
         }
@@ -88,7 +92,7 @@ public class FixEngine {
     }
   }
 
-  public static int sum(byte[] arr) {
+  public static int byteSum(byte[] arr) {
     int sum = 0;
 
     for (int i = 0; i < arr.length; i++) {
@@ -123,7 +127,7 @@ public class FixEngine {
     int checkSum;
     int originalTotal;
 
-    originalTotal = this.sum(this.insertSOHDelimiter(message.getBytes()));
+    originalTotal = this.byteSum(this.insertSOHDelimiter(message.getBytes()));
     checkSum = originalTotal % 256;
     checkSumString = Integer.toString(checkSum);
 
@@ -171,18 +175,45 @@ public class FixEngine {
 
 class TestEngine {
   public static void main(String[] args) {
-    FixEngine fe = new FixEngine("24242=1|35=V|");
+    FixEngine fm0 = new FixEngine("24242=1|35=V|");
+    // Test cases without '=' char
+    FixEngine fm1 = new FixEngine("24242=1|35|");
+    FixEngine fm2 = new FixEngine("24242|35=V|");
+
 
     try {
-      System.out.println(fe.getFixMessageString());
-      fe.parseRawBytes();
-      fe.appendCheckSumToString();
-      System.out.println(fe.getFixMessageString());
-      fe.checkFixFormat();
+      System.out.println(fm0.getFixMessageString());
+      fm0.parseRawBytes();
+      fm0.appendCheckSumToString();
+      System.out.println(fm0.getFixMessageString());
+      fm0.checkFixFormat();
     }
     catch (FixFormatException e) {
       System.out.println(e);
     }
 
+    try {
+      System.out.println(fm1.getFixMessageString());
+      fm1.parseRawBytes();
+      fm1.parseTagValueLists();
+      fm1.appendCheckSumToString();
+      System.out.println(fm0.getFixMessageString());
+      fm1.checkFixFormat();
+    }
+    catch (FixFormatException e) {
+      System.out.println(e);
+    }
+
+    try {
+      System.out.println(fm2.getFixMessageString());
+      fm2.parseRawBytes();
+      fm2.parseTagValueLists();
+      fm2.appendCheckSumToString();
+      System.out.println(fm0.getFixMessageString());
+      fm2.checkFixFormat();
+    }
+    catch (FixFormatException e) {
+      System.out.println(e);
+    }
   }
 }
