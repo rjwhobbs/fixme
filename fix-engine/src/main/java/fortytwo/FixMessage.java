@@ -76,15 +76,15 @@ public class FixMessage {
   public void parseTagValueLists() throws FixFormatException {
 
     if ((tags.size() == 0 || values.size() == 0) || (tags.size() != values.size())) {
-      throw new FixFormatException("One or more tag value pairs are missing.");
+      throw new FixFormatException(FixFormatException.missingTagValue);
     }
     if (!tags.get(0).equals(FixConstants.internalSenderIDTag)) {
-      throw new FixFormatException("FIX message must start with the internal sender ID.");
+      throw new FixFormatException(FixFormatException.startMsgError);
     }
 
     for (int i = 0; i < tags.size(); i++) {
       if(tags.get(i).isEmpty() || values.get(i).isEmpty()) {
-        throw new FixFormatException("One or more tag value pairs are missing.");
+        throw new FixFormatException(FixFormatException.missingTagValue);
       }
       msgMap.put(tags.get(i), values.get(i));
     }
@@ -93,14 +93,14 @@ public class FixMessage {
   public void validateMsgMap() throws FixMessageException {
     System.out.println(msgMap.entrySet());
     if (msgMap.get(FixConstants.internalTargetIDTag) == null) {
-      throw new FixMessageException("FIX message must contain an internal target ID.");
+      throw new FixMessageException(FixMessageException.missingInternalTargetID);
     }
   }
 
   public void checkFixFormat() throws FixFormatException {
     // This is checking if the byte string ends with a SOH char
     if (rawFixMessageBytes[rawFixMessageBytes.length - 1] != FixConstants.SOHDelimiter) {
-      throw new FixFormatException("Error in FIX message format, one or more delimiters is missing");
+      throw new FixFormatException(FixFormatException.missingDelimiter);
     }
   }
 
