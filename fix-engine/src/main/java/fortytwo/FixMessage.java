@@ -1,6 +1,7 @@
 package fortytwo;
 
 import fortytwo.constants.FixConstants;
+import fortytwo.fixexceptions.FixCheckSumException;
 import fortytwo.fixexceptions.FixFormatException;
 import fortytwo.fixexceptions.FixMessageException;
 import fortytwo.utils.FixUtils;
@@ -145,6 +146,10 @@ class TestEngine {
     FixMessage fm2 = new FixMessage("24242|42424=2|35=V|");
     // Test without internal target ID
     FixMessage fm3 = new FixMessage("24242=1|35=V|");
+    // Test with hard coded wrong checksum
+    FixMessage fm4 = new FixMessage("24242=1|42424=2|35=V|10=111|");
+    // Test without checksum
+    FixMessage fm5 = new FixMessage("24242=1|42424=2|35=V|");
 
     // NB These tests are designed to happen sequentially,
     // ie, you will need to parse the raw bytes before validating the map.
@@ -159,13 +164,18 @@ class TestEngine {
       fm0.parseTagValueLists();
       fm0.validateMsgMap();
       fm0.checkFixFormat();
+      FixUtils.valCheckSum(fm0.getFixMessageString());
       System.out.println("fm0: " + fm0.getFixMessageString() + "\n" + fm0.msgMap.entrySet());
       System.out.println("------------------------");
     }
     catch (FixFormatException e) {
       System.out.println("fm0 error: " + e);
+      System.out.println("------------------------");
     }
     catch (FixMessageException e) {
+      System.out.println("fm0 error: " + e);
+    }
+    catch (FixCheckSumException e) {
       System.out.println("fm0 error: " + e);
     }
 
@@ -181,9 +191,11 @@ class TestEngine {
     }
     catch (FixFormatException e) {
       System.out.println("fm1 error: " + e);
+      System.out.println("------------------------");
     }
     catch (FixMessageException e) {
       System.out.println("fm1 error: " + e);
+      System.out.println("------------------------");
     }
 
     try {
@@ -197,6 +209,7 @@ class TestEngine {
     }
     catch (FixFormatException e) {
       System.out.println("fm2 error: " + e);
+      System.out.println("------------------------");
     }
 
     try {
@@ -213,9 +226,34 @@ class TestEngine {
     }
     catch (FixFormatException e) {
       System.out.println("fm3 error: " + e);
+      System.out.println("------------------------");
     }
     catch (FixMessageException e) {
       System.out.println("fm3 error: " + e);
+      System.out.println("------------------------");
     }
+
+    try {
+      System.out.println(fm4.getFixMessageString());
+      FixUtils.valCheckSum(fm4.getFixMessageString());
+      System.out.println("fm4: " + fm4.getFixMessageString());
+      System.out.println("------------------------");
+    }
+    catch (FixCheckSumException e) {
+      System.out.println("fm4 error: " + e);
+      System.out.println("------------------------");
+    }
+
+    try {
+      System.out.println(fm5.getFixMessageString());
+      FixUtils.valCheckSum(fm5.getFixMessageString());
+      System.out.println("fm5: " + fm5.getFixMessageString());
+      System.out.println("------------------------");
+    }
+    catch (FixCheckSumException e) {
+      System.out.println("fm5 error: " + e);
+      System.out.println("------------------------");
+    }
+
   }
 }

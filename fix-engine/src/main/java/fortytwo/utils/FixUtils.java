@@ -1,8 +1,15 @@
 package fortytwo.utils;
 
 import fortytwo.constants.FixConstants;
+import fortytwo.fixexceptions.FixCheckSumException;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FixUtils {
+
+  private static final Pattern checkSumPattern = Pattern.compile("\\|(10=(\\d{3})\\|)$");
+
   public static byte[] insertSOHDelimiter(byte[] arr) {
     for (int i = 0; i < arr.length; i++) {
       if (arr[i] == FixConstants.printableDelimiter) {
@@ -47,6 +54,32 @@ public class FixUtils {
     }
     return checkSumString;
   }
+
+  public static void valCheckSum(String message) throws FixCheckSumException {
+    Matcher m = checkSumPattern.matcher(message);
+    String strippedMessage;
+    String strToRemove;
+    String checkSumString;
+    int checkSumVal;
+
+    if (m.find()) {
+      strToRemove = m.group(1);
+      checkSumString = m.group(2);
+      checkSumVal = Integer.parseInt(checkSumString);
+      strippedMessage = message.replace(strToRemove, "");
+      if (checkSumVal == createCheckSum(insertSOHDelimiter(strippedMessage.getBytes()))) {
+        return ;
+      }
+      else {
+        throw new FixCheckSumException(FixCheckSumException.checkSumIncorrect);
+      }
+    }
+    throw new FixCheckSumException(FixCheckSumException.checkSumMissing);
+  }
+
+//  public static void valCheckSum(byte[] message) {
+//
+//  }
 
   private static int createCheckSum(byte[] arr) {
     int summedBytes = byteSum(arr);

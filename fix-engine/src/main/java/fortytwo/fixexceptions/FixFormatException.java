@@ -10,5 +10,5 @@ public class FixFormatException extends Exception{
   public static final String missingTagValue =
           "One or more tag value pairs are missing.";
   public static final String missingDelimiter =
-          "Error in FIX message format, one or more delimiters is missing";
+          "Error in FIX message format, one or more delimiters is missing.";
 }
