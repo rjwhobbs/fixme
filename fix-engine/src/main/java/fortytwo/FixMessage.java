@@ -91,7 +91,6 @@ public class FixMessage {
   }
 
   public void validateMsgMap() throws FixMessageException {
-    System.out.println(msgMap.entrySet());
     if (msgMap.get(FixConstants.internalTargetIDTag) == null) {
       throw new FixMessageException(FixMessageException.missingInternalTargetID);
     }
@@ -153,14 +152,15 @@ class TestEngine {
     // used in the constructors.
     try {
       System.out.println(fm0.getFixMessageString());
+      fm0.checkFixFormat();
+      fm0.appendCheckSumToString();
+      fm0.appendCheckSumToBytes();
       fm0.parseRawBytes();
       fm0.parseTagValueLists();
       fm0.validateMsgMap();
-//      fm0.appendCheckSumToString();
-      fm0.appendCheckSumToBytes();
-
-//      System.out.println(fm0.getFixMessageString());
       fm0.checkFixFormat();
+      System.out.println("fm0: " + fm0.getFixMessageString() + "\n" + fm0.msgMap.entrySet());
+      System.out.println("------------------------");
     }
     catch (FixFormatException e) {
       System.out.println("fm0 error: " + e);
@@ -177,6 +177,7 @@ class TestEngine {
       fm1.appendCheckSumToString();
       System.out.println(fm0.getFixMessageString());
       fm1.checkFixFormat();
+      System.out.println("------------------------");
     }
     catch (FixFormatException e) {
       System.out.println("fm1 error: " + e);
@@ -192,6 +193,7 @@ class TestEngine {
       fm2.appendCheckSumToString();
       System.out.println(fm0.getFixMessageString());
       fm2.checkFixFormat();
+      System.out.println("------------------------");
     }
     catch (FixFormatException e) {
       System.out.println("fm2 error: " + e);
@@ -207,6 +209,7 @@ class TestEngine {
 
 //      System.out.println(fm0.getFixMessageString());
       fm3.checkFixFormat();
+      System.out.println("------------------------");
     }
     catch (FixFormatException e) {
       System.out.println("fm3 error: " + e);

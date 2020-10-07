@@ -32,12 +32,8 @@ public class FixUtils {
 
   public static String createCheckSumString(byte[] message) {
     String checkSumString;
-    int checkSum;
-    int originalTotal;
 
-    originalTotal = FixUtils.byteSum(message);
-    checkSum = originalTotal % 256;
-    checkSumString = Integer.toString(checkSum);
+    checkSumString = Integer.toString(createCheckSum(message));
 
     switch (checkSumString.length()) {
       case 1:
@@ -49,7 +45,11 @@ public class FixUtils {
       default:
         break;
     }
-
     return checkSumString;
+  }
+
+  private static int createCheckSum(byte[] arr) {
+    int summedBytes = byteSum(arr);
+    return summedBytes % 256;
   }
 }
