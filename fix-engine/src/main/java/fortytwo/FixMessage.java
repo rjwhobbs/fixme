@@ -91,6 +91,7 @@ public class FixMessage {
   }
 
   public void validateMsgMap() throws FixMessageException {
+    System.out.println(msgMap.entrySet());
     if (msgMap.get(FixConstants.internalTargetIDTag) == null) {
       throw new FixMessageException("FIX message must contain an internal target ID.");
     }
@@ -139,15 +140,22 @@ public class FixMessage {
 
 class TestEngine {
   public static void main(String[] args) {
-    FixMessage fm0 = new FixMessage("24242=1|35=V|");
+    FixMessage fm0 = new FixMessage("24242=1|42424=2|35=V|");
     // Test cases without '=' char
-    FixMessage fm1 = new FixMessage("24242=1|35|");
-    FixMessage fm2 = new FixMessage("24242|35=V|");
+    FixMessage fm1 = new FixMessage("24242=1|42424=2|35|");
+    FixMessage fm2 = new FixMessage("24242|42424=2|35=V|");
+    // Test without internal target ID
+    FixMessage fm3 = new FixMessage("24242=1|35=V|");
 
-
+    // NB These tests are designed to happen sequentially,
+    // ie, you will need to parse the raw bytes before validating the map.
+    // Once we have factory methods these will probably be private methods
+    // used in the constructors.
     try {
       System.out.println(fm0.getFixMessageString());
       fm0.parseRawBytes();
+      fm0.parseTagValueLists();
+      fm0.validateMsgMap();
 //      fm0.appendCheckSumToString();
       fm0.appendCheckSumToBytes();
 
@@ -155,19 +163,26 @@ class TestEngine {
       fm0.checkFixFormat();
     }
     catch (FixFormatException e) {
-      System.out.println(e);
+      System.out.println("fm0 error: " + e);
+    }
+    catch (FixMessageException e) {
+      System.out.println("fm0 error: " + e);
     }
 
     try {
       System.out.println(fm1.getFixMessageString());
       fm1.parseRawBytes();
       fm1.parseTagValueLists();
+      fm1.validateMsgMap();
       fm1.appendCheckSumToString();
       System.out.println(fm0.getFixMessageString());
       fm1.checkFixFormat();
     }
     catch (FixFormatException e) {
-      System.out.println(e);
+      System.out.println("fm1 error: " + e);
+    }
+    catch (FixMessageException e) {
+      System.out.println("fm1 error: " + e);
     }
 
     try {
@@ -179,7 +194,25 @@ class TestEngine {
       fm2.checkFixFormat();
     }
     catch (FixFormatException e) {
-      System.out.println(e);
+      System.out.println("fm2 error: " + e);
+    }
+
+    try {
+      System.out.println(fm3.getFixMessageString());
+      fm3.parseRawBytes();
+      fm3.parseTagValueLists();
+      fm3.validateMsgMap();
+//      fm0.appendCheckSumToString();
+      fm3.appendCheckSumToBytes();
+
+//      System.out.println(fm0.getFixMessageString());
+      fm3.checkFixFormat();
+    }
+    catch (FixFormatException e) {
+      System.out.println("fm3 error: " + e);
+    }
+    catch (FixMessageException e) {
+      System.out.println("fm3 error: " + e);
     }
   }
 }
