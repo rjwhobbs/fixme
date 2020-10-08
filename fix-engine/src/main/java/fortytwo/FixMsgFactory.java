@@ -36,4 +36,25 @@ public abstract class FixMsgFactory {
   }
 }
 
+class TestFactory {
+  public static void main(String[] args) {
+    try {
+      FixMessage test_one = FixMsgFactory.buyMsg(
+              "1",
+              "2",
+              "AAL",
+              "20",
+              "11.11"
+      );
+      System.out.println("__________Test One______________");
+      System.out.println(test_one.getFixMsgString());
+      System.out.println("________________________________");
+    }
+    catch (FixFormatException | FixMessageException e) {
+      System.out.println("Test one error: " + e);
+    }
+
+  }
+}
+
 
