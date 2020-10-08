@@ -16,18 +16,7 @@ public class FixMessage {
   private byte[] rawFixMessageBytes;
 //  String object will contain our printable delimiter
   private String fixMessageString;
-
-  private String internalRouterID = null;
-  private String msgType = null;
-  private String senderCompID = null;
-  private String targetCompID = null;
-  private String side = null;
-  private String sideValue = null;
-  private String symbol = null;
-  private String symbolValue = null;
-
   public HashMap<String, String> msgMap = new HashMap<>();
-
   private List<String> tags = new ArrayList<>();
   private List<String> values = new ArrayList<>();
 

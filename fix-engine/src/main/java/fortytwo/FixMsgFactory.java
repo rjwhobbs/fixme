@@ -1,6 +1,8 @@
 package fortytwo;
 
 import fortytwo.constants.FixConstants;
+import fortytwo.fixexceptions.FixFormatException;
+import fortytwo.fixexceptions.FixMessageException;
 import fortytwo.utils.FixUtils;
 
 public abstract class FixMsgFactory {
@@ -10,8 +12,9 @@ public abstract class FixMsgFactory {
           String symbol,
           String quantity,
           String price
-  ) {
-    String finalMessage =
+  ) throws FixMessageException, FixFormatException {
+    FixMessage fixMessage;
+    String finalMessageString =
             FixConstants.internalSenderIDTag + "=" + internalSenderID + FixConstants.printableDelimiter
             + FixConstants.internalTargetIDTag + "=" + internalTargetID + FixConstants.printableDelimiter
             + FixConstants.sideTag + "=" + FixConstants.BUY_SIDE + FixConstants.printableDelimiter
@@ -20,6 +23,17 @@ public abstract class FixMsgFactory {
             + FixConstants.orderQty + "=" + quantity + FixConstants.printableDelimiter
             + FixConstants.clientOrdID + "=" + FixUtils.createUniqueID() + FixConstants.printableDelimiter;
 
-    return new FixMessage(finalMessage);
+    fixMessage = new FixMessage(finalMessageString);
+
+    fixMessage.checkFixFormat();
+    fixMessage.appendCheckSumToBytes();
+    fixMessage.appendCheckSumToString();
+    fixMessage.parseRawBytes();
+    fixMessage.parseTagValueLists();
+    fixMessage.validateMsgMap();
+
+    return fixMessage;
   }
 }
+
+
