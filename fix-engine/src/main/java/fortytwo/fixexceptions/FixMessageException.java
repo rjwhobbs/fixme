@@ -1,8 +1,11 @@
 package fortytwo.fixexceptions;
 
-import fortytwo.FixMessage;
-
 public class FixMessageException extends Exception {
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
+
   public FixMessageException(String error) {
     super(error);
   }
