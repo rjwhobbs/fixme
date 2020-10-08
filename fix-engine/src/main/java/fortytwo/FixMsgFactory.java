@@ -26,8 +26,7 @@ public abstract class FixMsgFactory {
     fixMessage = new FixMessage(finalMessageString);
 
     fixMessage.checkFixFormat();
-    fixMessage.appendCheckSumToBytes();
-    fixMessage.appendCheckSumToString();
+    fixMessage.appendCheckSum();
     fixMessage.parseRawBytes();
     fixMessage.parseTagValueLists();
     fixMessage.validateMsgMap();

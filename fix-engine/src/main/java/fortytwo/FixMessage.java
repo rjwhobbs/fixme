@@ -98,16 +98,15 @@ public class FixMessage {
     }
   }
 
-  public void appendCheckSumToString() {
+  public void appendCheckSum() {
+    // Append to string
     this.fixMessageString =
             this.fixMessageString
                     + FixConstants.checkSumTag + "="
                     + FixUtils.createCheckSumString(this.rawFixMessageBytes)
                     + FixConstants.printableDelimiter;
-  }
 
-  public void appendCheckSumToBytes() {
-
+    // Append to byte[]
     byte[] tempByteArr = new byte[rawFixMessageBytes.length + 7];
     byte[] checkSumTag = (FixConstants.checkSumTag + "=").getBytes();
     byte[] checkSumBytes = FixUtils.createCheckSumString(rawFixMessageBytes).getBytes();
@@ -150,12 +149,11 @@ class TestEngine {
     // NB These tests are designed to happen sequentially,
     // ie, you will need to parse the raw bytes before validating the map.
     // Once we have factory methods these will probably be private methods
-    // used in the constructors.
+    // used in the constructors/factories.
     try {
       System.out.println(fm0.getFixMsgString());
       fm0.checkFixFormat();
-      fm0.appendCheckSumToString();
-      fm0.appendCheckSumToBytes();
+      fm0.appendCheckSum();
       fm0.parseRawBytes();
       fm0.parseTagValueLists();
       fm0.validateMsgMap();
@@ -180,7 +178,7 @@ class TestEngine {
       fm1.parseRawBytes();
       fm1.parseTagValueLists();
       fm1.validateMsgMap();
-      fm1.appendCheckSumToString();
+      fm1.appendCheckSum();
       System.out.println(fm0.getFixMsgString());
       fm1.checkFixFormat();
       System.out.println("------------------------");
@@ -198,7 +196,7 @@ class TestEngine {
       System.out.println(fm2.getFixMsgString());
       fm2.parseRawBytes();
       fm2.parseTagValueLists();
-      fm2.appendCheckSumToString();
+      fm2.appendCheckSum();
       System.out.println(fm0.getFixMsgString());
       fm2.checkFixFormat();
       System.out.println("------------------------");
@@ -213,10 +211,6 @@ class TestEngine {
       fm3.parseRawBytes();
       fm3.parseTagValueLists();
       fm3.validateMsgMap();
-//      fm0.appendCheckSumToString();
-      fm3.appendCheckSumToBytes();
-
-//      System.out.println(fm0.getFixMessageString());
       fm3.checkFixFormat();
       System.out.println("------------------------");
     }
@@ -253,8 +247,7 @@ class TestEngine {
 
     try {
       System.out.println(fm6.getFixMsgString());
-      fm6.appendCheckSumToString();
-      fm6.appendCheckSumToBytes();
+      fm6.appendCheckSum();
       fm6.parseRawBytes();
       fm6.parseTagValueLists();
       System.out.println("fm6: " + fm6.getFixMsgString());
