@@ -76,7 +76,12 @@ public class FixMessage {
       if(tags.get(i).isEmpty() || values.get(i).isEmpty()) {
         throw new FixFormatException(FixFormatException.missingTagValue);
       }
-      msgMap.put(tags.get(i), values.get(i));
+      if (!msgMap.containsKey(tags.get(i))) {
+        msgMap.put(tags.get(i), values.get(i));
+      }
+      else {
+        throw new FixFormatException(FixFormatException.duplicateTags);
+      }
     }
   }
 
@@ -139,6 +144,8 @@ class TestEngine {
     FixMessage fm4 = new FixMessage("24242=1|42424=2|35=V|10=111|");
     // Test without checksum
     FixMessage fm5 = new FixMessage("24242=1|42424=2|35=V|");
+    // Test for duplicate tags
+    FixMessage fm6 = new FixMessage("24242=1|42424=2|10=V|");
 
     // NB These tests are designed to happen sequentially,
     // ie, you will need to parse the raw bytes before validating the map.
@@ -241,6 +248,20 @@ class TestEngine {
     }
     catch (FixCheckSumException e) {
       System.out.println("fm5 error: " + e);
+      System.out.println("------------------------");
+    }
+
+    try {
+      System.out.println(fm6.getFixMsgString());
+      fm6.appendCheckSumToString();
+      fm6.appendCheckSumToBytes();
+      fm6.parseRawBytes();
+      fm6.parseTagValueLists();
+      System.out.println("fm6: " + fm6.getFixMsgString());
+      System.out.println("------------------------");
+    }
+    catch (FixFormatException e) {
+      System.out.println("fm6 error: " + e.getMessage());
       System.out.println("------------------------");
     }
 
