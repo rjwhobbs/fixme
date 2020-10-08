@@ -38,6 +38,7 @@ public abstract class FixMsgFactory {
 
 class TestFactory {
   public static void main(String[] args) {
+    // Correct input test
     try {
       FixMessage test_one = FixMsgFactory.buyMsg(
               "1",
@@ -52,6 +53,23 @@ class TestFactory {
     }
     catch (FixFormatException | FixMessageException e) {
       System.out.println("Test one error: " + e);
+    }
+
+    // Lol, tag injection.
+    try {
+      FixMessage test_two = FixMsgFactory.buyMsg(
+              "2|3=20",
+              "2",
+              "AAL",
+              "20",
+              "11.11"
+      );
+      System.out.println("__________Test Two______________");
+      System.out.println(test_two.getFixMsgString());
+      System.out.println("________________________________");
+    }
+    catch (FixFormatException | FixMessageException e) {
+      System.out.println("Test two error: " + e);
     }
 
   }
