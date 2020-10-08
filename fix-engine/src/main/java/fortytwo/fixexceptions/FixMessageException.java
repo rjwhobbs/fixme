@@ -6,5 +6,6 @@ public class FixMessageException extends Exception {
     super(error);
   }
 
-  public static final String missingInternalTargetID = "FIX message must contain an internal target ID.";
+  public static final String missingInternalTargetID =
+          "FIX message must contain an internal target ID.";
 }
