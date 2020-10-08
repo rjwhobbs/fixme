@@ -126,11 +126,11 @@ public class FixMessage {
     this.rawFixMessageBytes = tempByteArr;
   }
 
-  public byte[] getRawFixMessageBytes() {
+  public byte[] getRawFixMsgBytes() {
     return rawFixMessageBytes;
   }
 
-  public String getFixMessageString() {
+  public String getFixMsgString() {
     return fixMessageString;
   }
 
@@ -156,7 +156,7 @@ class TestEngine {
     // Once we have factory methods these will probably be private methods
     // used in the constructors.
     try {
-      System.out.println(fm0.getFixMessageString());
+      System.out.println(fm0.getFixMsgString());
       fm0.checkFixFormat();
       fm0.appendCheckSumToString();
       fm0.appendCheckSumToBytes();
@@ -164,8 +164,8 @@ class TestEngine {
       fm0.parseTagValueLists();
       fm0.validateMsgMap();
       fm0.checkFixFormat();
-      FixUtils.valCheckSum(fm0.getFixMessageString());
-      System.out.println("fm0: " + fm0.getFixMessageString() + "\n" + fm0.msgMap.entrySet());
+      FixUtils.valCheckSum(fm0.getFixMsgString());
+      System.out.println("fm0: " + fm0.getFixMsgString() + "\n" + fm0.msgMap.entrySet());
       System.out.println("------------------------");
     }
     catch (FixFormatException e) {
@@ -180,12 +180,12 @@ class TestEngine {
     }
 
     try {
-      System.out.println(fm1.getFixMessageString());
+      System.out.println(fm1.getFixMsgString());
       fm1.parseRawBytes();
       fm1.parseTagValueLists();
       fm1.validateMsgMap();
       fm1.appendCheckSumToString();
-      System.out.println(fm0.getFixMessageString());
+      System.out.println(fm0.getFixMsgString());
       fm1.checkFixFormat();
       System.out.println("------------------------");
     }
@@ -199,11 +199,11 @@ class TestEngine {
     }
 
     try {
-      System.out.println(fm2.getFixMessageString());
+      System.out.println(fm2.getFixMsgString());
       fm2.parseRawBytes();
       fm2.parseTagValueLists();
       fm2.appendCheckSumToString();
-      System.out.println(fm0.getFixMessageString());
+      System.out.println(fm0.getFixMsgString());
       fm2.checkFixFormat();
       System.out.println("------------------------");
     }
@@ -213,7 +213,7 @@ class TestEngine {
     }
 
     try {
-      System.out.println(fm3.getFixMessageString());
+      System.out.println(fm3.getFixMsgString());
       fm3.parseRawBytes();
       fm3.parseTagValueLists();
       fm3.validateMsgMap();
@@ -234,9 +234,9 @@ class TestEngine {
     }
 
     try {
-      System.out.println(fm4.getFixMessageString());
-      FixUtils.valCheckSum(fm4.getFixMessageString());
-      System.out.println("fm4: " + fm4.getFixMessageString());
+      System.out.println(fm4.getFixMsgString());
+      FixUtils.valCheckSum(fm4.getFixMsgString());
+      System.out.println("fm4: " + fm4.getFixMsgString());
       System.out.println("------------------------");
     }
     catch (FixCheckSumException e) {
@@ -245,9 +245,9 @@ class TestEngine {
     }
 
     try {
-      System.out.println(fm5.getFixMessageString());
-      FixUtils.valCheckSum(fm5.getFixMessageString());
-      System.out.println("fm5: " + fm5.getFixMessageString());
+      System.out.println(fm5.getFixMsgString());
+      FixUtils.valCheckSum(fm5.getFixMsgString());
+      System.out.println("fm5: " + fm5.getFixMsgString());
       System.out.println("------------------------");
     }
     catch (FixCheckSumException e) {
