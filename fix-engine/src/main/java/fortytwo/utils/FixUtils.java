@@ -5,9 +5,11 @@ import fortytwo.fixexceptions.FixCheckSumException;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Random;
 
 public class FixUtils {
 
+  private static final Random rand = new Random();
   private static final Pattern checkSumPattern = Pattern.compile("\\|(10=(\\d{3})\\|)$");
 
   public static byte[] insertSOHDelimiter(byte[] arr) {
@@ -80,6 +82,13 @@ public class FixUtils {
 //  public static void valCheckSum(byte[] message) {
 //
 //  }
+
+  public static String createUniqueID() {
+    int randNum = rand.nextInt(100000);
+    long timeStamp = System.currentTimeMillis();
+
+    return Integer.toHexString(randNum) + "_" + Long.toString(timeStamp);
+  }
 
   private static int createCheckSum(byte[] arr) {
     int summedBytes = byteSum(arr);
