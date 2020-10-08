@@ -1,11 +1,7 @@
 package fortytwo.fixexceptions;
 
 public class FixCheckSumException extends Exception{
-  /**
-   *
-   */
   private static final long serialVersionUID = 1L;
-
   public FixCheckSumException(String error) {
     super(error);
   }
