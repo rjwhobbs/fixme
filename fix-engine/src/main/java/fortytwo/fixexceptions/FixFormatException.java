@@ -16,4 +16,6 @@ public class FixFormatException extends Exception{
           "Your message cannot have duplicate tags";
   public static final String quantityFormat =
           "Quantity format error: Quantity needs to be a positive signed int greater than 0.";
+  public static final String priceFormat =
+          "Price format error: Price needs to be a positive double with 2 decimal places.";
 }
