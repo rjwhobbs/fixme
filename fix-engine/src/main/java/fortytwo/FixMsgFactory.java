@@ -14,6 +14,7 @@ public abstract class FixMsgFactory {
           String price
   ) throws FixMessageException, FixFormatException {
     FixMessage fixMessage;
+    valQuantityInput(quantity);
     String finalBuyMsg = buySellTemplate(
             FixConstants.BUY_SIDE,
             internalSenderID,
@@ -60,6 +61,18 @@ public abstract class FixMsgFactory {
     fixMessage.validateMsgMap();
 
     return fixMessage;
+  }
+
+  private static void valQuantityInput(String input) throws FixFormatException {
+    try {
+      int testInput = Integer.parseInt(input);
+      if (testInput < 1) {
+        throw new FixFormatException(FixFormatException.quantityFormat);
+      }
+    }
+    catch (NumberFormatException e) {
+      throw new FixFormatException(FixFormatException.quantityFormat);
+    }
   }
 
   private static String buySellTemplate(
@@ -132,6 +145,22 @@ class TestFactory {
     }
     catch (FixFormatException | FixMessageException e) {
       System.out.println("Test three error: " + e);
+    }
+
+    try {
+      FixMessage test_four = FixMsgFactory.createBuyMsg(
+              "1",
+              "2",
+              "AAL",
+              "a20s",
+              "11.11"
+      );
+      System.out.println("__________Test Four______________");
+      System.out.println(test_four.getFixMsgString());
+      System.out.println("________________________________");
+    }
+    catch (FixFormatException | FixMessageException | NumberFormatException e) {
+      System.out.println("Test Four error: " + e);
     }
 
 

@@ -14,4 +14,6 @@ public class FixFormatException extends Exception{
           "Error in FIX message format, one or more delimiters is missing.";
   public static final String duplicateTags =
           "Your message cannot have duplicate tags";
+  public static final String quantityFormat =
+          "Quantity format error: Quantity needs to be a positive signed int greater than 0.";
 }
