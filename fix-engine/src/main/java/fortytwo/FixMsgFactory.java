@@ -71,6 +71,52 @@ public abstract class FixMsgFactory {
     return fixMessage;
   }
 
+  public static FixMessage createExecFilledMsg(
+          String internalSenderID,
+          String internalTargetID,
+          String clientOrdID
+  ) throws FixMessageException, FixFormatException {
+    String finalFilledMsg = execReportTemplate(
+            FixConstants.ORDER_FILLED,
+            internalSenderID,
+            internalTargetID,
+            clientOrdID
+    );
+
+    FixMessage fixMessage = new FixMessage(finalFilledMsg);
+
+    fixMessage.checkFixFormat();
+    fixMessage.appendCheckSum();
+    fixMessage.parseRawBytes();
+    fixMessage.parseTagValueLists();
+    fixMessage.validateMsgMap();
+
+    return fixMessage;
+  }
+
+  public static FixMessage createExecRejectedMsg(
+          String internalSenderID,
+          String internalTargetID,
+          String clientOrdID
+  ) throws FixMessageException, FixFormatException {
+    String finalFilledMsg = execReportTemplate(
+            FixConstants.ORDER_REJECTED,
+            internalSenderID,
+            internalTargetID,
+            clientOrdID
+    );
+
+    FixMessage fixMessage = new FixMessage(finalFilledMsg);
+
+    fixMessage.checkFixFormat();
+    fixMessage.appendCheckSum();
+    fixMessage.parseRawBytes();
+    fixMessage.parseTagValueLists();
+    fixMessage.validateMsgMap();
+
+    return fixMessage;
+  }
+
   private static void valPriceInput(String input) throws FixFormatException {
     try {
       double testInput = Double.parseDouble(input);
@@ -115,6 +161,19 @@ public abstract class FixMsgFactory {
             + FixConstants.price + "=" + price + FixConstants.printableDelimiter
             + FixConstants.orderQty + "=" + quantity + FixConstants.printableDelimiter
             + FixConstants.clientOrdID + "=" + FixUtils.createUniqueID() + FixConstants.printableDelimiter;
+  }
+
+  private static String execReportTemplate(
+          String execType,
+          String internalSenderID,
+          String internalTargetID,
+          String clientOrdID
+  ) {
+    return FixConstants.internalSenderIDTag + "=" + internalSenderID + FixConstants.printableDelimiter
+            + FixConstants.internalTargetIDTag + "=" + internalTargetID + FixConstants.printableDelimiter
+            + FixConstants.msgTypeTag + "=" + FixConstants.EXEC_REPORT + FixConstants.printableDelimiter
+            + FixConstants.clientOrdID + "=" + clientOrdID + FixConstants.printableDelimiter
+            + FixConstants.execType + "=" + execType + FixConstants.printableDelimiter;
   }
 }
 
@@ -187,7 +246,7 @@ class TestFactory {
       System.out.println(test_four.getFixMsgString());
       System.out.println("________________________________");
     }
-    catch (FixFormatException | FixMessageException | NumberFormatException e) {
+    catch (FixFormatException | FixMessageException e) {
       System.out.println("Test Four error: " + e);
       System.out.println("________________________________");
     }
@@ -205,8 +264,40 @@ class TestFactory {
       System.out.println(test_five.getFixMsgString());
       System.out.println("________________________________");
     }
-    catch (FixFormatException | FixMessageException | NumberFormatException e) {
+    catch (FixFormatException | FixMessageException e) {
       System.out.println("Test Five error: " + e);
+      System.out.println("________________________________");
+    }
+
+    // Testing exec report filled
+    try {
+      FixMessage test_six = FixMsgFactory.createExecFilledMsg(
+              "1",
+              "2",
+              "qe3_123"
+      );
+      System.out.println("__________Test Six______________");
+      System.out.println(test_six.getFixMsgString());
+      System.out.println("________________________________");
+    }
+    catch (FixFormatException | FixMessageException e) {
+      System.out.println("Test Six error: " + e);
+      System.out.println("________________________________");
+    }
+
+    // Testing exec report rejected
+    try {
+      FixMessage test_seven = FixMsgFactory.createExecRejectedMsg(
+              "1",
+              "2",
+              "qe3_123"
+      );
+      System.out.println("__________Test Seven______________");
+      System.out.println(test_seven.getFixMsgString());
+      System.out.println("________________________________");
+    }
+    catch (FixFormatException | FixMessageException e) {
+      System.out.println("Test Seven error: " + e);
       System.out.println("________________________________");
     }
   }
