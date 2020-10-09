@@ -10,18 +10,15 @@ public class Router {
     private List<Client> brokerTable;
     private List<Client> marketTable;
 
+    /**
+     *
+     */
     public void acceptBroker() {
         try (final AsynchronousServerSocketChannel brokerChannel = AsynchronousServerSocketChannel.open()) {
             InetSocketAddress hostAddress = new InetSocketAddress("localhost", 5000);
             brokerChannel.bind(hostAddress);
             while (true) {
                 brokerChannel.accept(null, new CompletionHandler<AsynchronousSocketChannel, Object>() {
-                    /**
-                     * Invoked when an operation has completed.
-                     *
-                     * @param result     The result of the I/O operation.
-                     * @param attachment
-                     */
                     @Override
                     public void completed(AsynchronousSocketChannel result, Object attachment) {
                         if (result.isOpen()) {
@@ -30,12 +27,6 @@ public class Router {
                         }
                     }
 
-                    /**
-                     * Invoked when an operation fails.
-                     *
-                     * @param exc        The exception to indicate why the I/O operation failed
-                     * @param attachment
-                     */
                     @Override
                     public void failed(Throwable exc, Object attachment) {
 
@@ -49,6 +40,9 @@ public class Router {
         }
     }
 
+    /**
+     *
+     */
     public void acceptMarket() {
         try (final AsynchronousServerSocketChannel marketChannel = AsynchronousServerSocketChannel.open()) {
             InetSocketAddress hostAddress = new InetSocketAddress("localhost", 5001);
@@ -56,12 +50,6 @@ public class Router {
 
             while (true) {
                 marketChannel.accept(null, new CompletionHandler<AsynchronousSocketChannel, Object>() {
-                    /**
-                     * Invoked when an operation has completed.
-                     *
-                     * @param result     The result of the I/O operation.
-                     * @param attachment
-                     */
                     @Override
                     public void completed(AsynchronousSocketChannel result, Object attachment) {
                         if (result.isOpen()) {
@@ -70,12 +58,6 @@ public class Router {
                         }
                     }
 
-                    /**
-                     * Invoked when an operation fails.
-                     *
-                     * @param exc        The exception to indicate why the I/O operation failed
-                     * @param attachment
-                     */
                     @Override
                     public void failed(Throwable exc, Object attachment) {
                         System.out.println("Something went wrong");
