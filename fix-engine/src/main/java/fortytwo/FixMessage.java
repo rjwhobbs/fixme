@@ -76,7 +76,12 @@ public class FixMessage {
       if(tags.get(i).isEmpty() || values.get(i).isEmpty()) {
         throw new FixFormatException(FixFormatException.missingTagValue);
       }
-      msgMap.put(tags.get(i), values.get(i));
+      if (!msgMap.containsKey(tags.get(i))) {
+        msgMap.put(tags.get(i), values.get(i));
+      }
+      else {
+        throw new FixFormatException(FixFormatException.duplicateTags);
+      }
     }
   }
 
@@ -93,16 +98,15 @@ public class FixMessage {
     }
   }
 
-  public void appendCheckSumToString() {
+  public void appendCheckSum() {
+    // Append to string
     this.fixMessageString =
             this.fixMessageString
                     + FixConstants.checkSumTag + "="
                     + FixUtils.createCheckSumString(this.rawFixMessageBytes)
                     + FixConstants.printableDelimiter;
-  }
 
-  public void appendCheckSumToBytes() {
-
+    // Append to byte[]
     byte[] tempByteArr = new byte[rawFixMessageBytes.length + 7];
     byte[] checkSumTag = (FixConstants.checkSumTag + "=").getBytes();
     byte[] checkSumBytes = FixUtils.createCheckSumString(rawFixMessageBytes).getBytes();
@@ -139,16 +143,17 @@ class TestEngine {
     FixMessage fm4 = new FixMessage("24242=1|42424=2|35=V|10=111|");
     // Test without checksum
     FixMessage fm5 = new FixMessage("24242=1|42424=2|35=V|");
+    // Test for duplicate tags
+    FixMessage fm6 = new FixMessage("24242=1|42424=2|10=V|");
 
     // NB These tests are designed to happen sequentially,
     // ie, you will need to parse the raw bytes before validating the map.
     // Once we have factory methods these will probably be private methods
-    // used in the constructors.
+    // used in the constructors/factories.
     try {
       System.out.println(fm0.getFixMsgString());
       fm0.checkFixFormat();
-      fm0.appendCheckSumToString();
-      fm0.appendCheckSumToBytes();
+      fm0.appendCheckSum();
       fm0.parseRawBytes();
       fm0.parseTagValueLists();
       fm0.validateMsgMap();
@@ -173,7 +178,7 @@ class TestEngine {
       fm1.parseRawBytes();
       fm1.parseTagValueLists();
       fm1.validateMsgMap();
-      fm1.appendCheckSumToString();
+      fm1.appendCheckSum();
       System.out.println(fm0.getFixMsgString());
       fm1.checkFixFormat();
       System.out.println("------------------------");
@@ -191,7 +196,7 @@ class TestEngine {
       System.out.println(fm2.getFixMsgString());
       fm2.parseRawBytes();
       fm2.parseTagValueLists();
-      fm2.appendCheckSumToString();
+      fm2.appendCheckSum();
       System.out.println(fm0.getFixMsgString());
       fm2.checkFixFormat();
       System.out.println("------------------------");
@@ -206,10 +211,6 @@ class TestEngine {
       fm3.parseRawBytes();
       fm3.parseTagValueLists();
       fm3.validateMsgMap();
-//      fm0.appendCheckSumToString();
-      fm3.appendCheckSumToBytes();
-
-//      System.out.println(fm0.getFixMessageString());
       fm3.checkFixFormat();
       System.out.println("------------------------");
     }
@@ -241,6 +242,19 @@ class TestEngine {
     }
     catch (FixCheckSumException e) {
       System.out.println("fm5 error: " + e);
+      System.out.println("------------------------");
+    }
+
+    try {
+      System.out.println(fm6.getFixMsgString());
+      fm6.appendCheckSum();
+      fm6.parseRawBytes();
+      fm6.parseTagValueLists();
+      System.out.println("fm6: " + fm6.getFixMsgString());
+      System.out.println("------------------------");
+    }
+    catch (FixFormatException e) {
+      System.out.println("fm6 error: " + e.getMessage());
       System.out.println("------------------------");
     }
 

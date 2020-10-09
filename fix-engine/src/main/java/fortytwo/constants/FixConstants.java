@@ -20,9 +20,11 @@ public class FixConstants {
   public final static String internalTargetIDTag  = "42424";
 
   // values
+  public final static String ORDER_SINGLE         = "D";
   public final static String MARKET_DATA_REQUEST  = "V";
   public final static String BUY_SIDE             = "1";
   public final static String SELL_SIDE            = "2";
-  public final static String ORDER_FILLED         = "2";
-  public final static String ORDER_REJECTED       = "8";
+  public final static String ORDER_REJECTED       = "2";
+  public final static String ORDER_FILLED         = "7";
+  public final static String EXEC_REPORT          = "8";
 }
