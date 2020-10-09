@@ -300,5 +300,27 @@ class TestFactory {
       System.out.println("Test Seven error: " + e);
       System.out.println("________________________________");
     }
+
+    // Usage test
+    try {
+      System.out.println("------Usage test one--------------");
+      FixMessage fixMessage = FixMsgFactory.createBuyMsg(
+              "000001",
+              "000002",
+              "AAL",
+              "20",
+              "11.11"
+
+      );
+      if (fixMessage.msgMap.get(FixConstants.msgTypeTag).equals(FixConstants.ORDER_SINGLE)) {
+        System.out.println("Message is a single order.");
+      }
+
+      System.out.println("--------------------");
+    }
+    catch (FixFormatException | FixMessageException e) {
+      System.out.println("------Usage test one error--------------");
+      System.out.println(e.getMessage());
+    }
   }
 }
