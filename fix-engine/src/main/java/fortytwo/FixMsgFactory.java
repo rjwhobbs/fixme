@@ -11,6 +11,28 @@ import java.util.regex.Pattern;
 public abstract class FixMsgFactory {
   private static final Pattern pricePattern = Pattern.compile("\\.\\d{2}$");
 
+  public static FixMessage createMsg(String msg) throws FixMessageException, FixFormatException {
+    FixMessage fixMessage = new FixMessage(msg);
+
+    fixMessage.checkFixFormat();
+    fixMessage.parseRawBytes();
+    fixMessage.parseTagValueLists();
+    fixMessage.validateMsgMap();
+
+    return fixMessage;
+  }
+
+  public static FixMessage createMsg(byte[] msg) throws FixMessageException, FixFormatException {
+    FixMessage fixMessage = new FixMessage(msg);
+
+    fixMessage.checkFixFormat();
+    fixMessage.parseRawBytes();
+    fixMessage.parseTagValueLists();
+    fixMessage.validateMsgMap();
+
+    return fixMessage;
+  }
+
   public static FixMessage createBuyMsg(
           String internalSenderID,
           String internalTargetID,
@@ -158,9 +180,9 @@ public abstract class FixMsgFactory {
             + FixConstants.msgTypeTag + "=" + FixConstants.ORDER_SINGLE + FixConstants.printableDelimiter
             + FixConstants.sideTag + "=" + side + FixConstants.printableDelimiter
             + FixConstants.symbolTag + "=" + symbol + FixConstants.printableDelimiter
-            + FixConstants.price + "=" + price + FixConstants.printableDelimiter
-            + FixConstants.orderQty + "=" + quantity + FixConstants.printableDelimiter
-            + FixConstants.clientOrdID + "=" + FixUtils.createUniqueID() + FixConstants.printableDelimiter;
+            + FixConstants.priceTag + "=" + price + FixConstants.printableDelimiter
+            + FixConstants.orderQtyTag + "=" + quantity + FixConstants.printableDelimiter
+            + FixConstants.clientOrdIDTag + "=" + FixUtils.createUniqueID() + FixConstants.printableDelimiter;
   }
 
   private static String execReportTemplate(
@@ -172,8 +194,8 @@ public abstract class FixMsgFactory {
     return FixConstants.internalSenderIDTag + "=" + internalSenderID + FixConstants.printableDelimiter
             + FixConstants.internalTargetIDTag + "=" + internalTargetID + FixConstants.printableDelimiter
             + FixConstants.msgTypeTag + "=" + FixConstants.EXEC_REPORT + FixConstants.printableDelimiter
-            + FixConstants.clientOrdID + "=" + clientOrdID + FixConstants.printableDelimiter
-            + FixConstants.execType + "=" + execType + FixConstants.printableDelimiter;
+            + FixConstants.clientOrdIDTag + "=" + clientOrdID + FixConstants.printableDelimiter
+            + FixConstants.execTypeTag + "=" + execType + FixConstants.printableDelimiter;
   }
 }
 
@@ -320,6 +342,33 @@ class TestFactory {
     }
     catch (FixFormatException | FixMessageException e) {
       System.out.println("------Usage test one error--------------");
+      System.out.println(e.getMessage());
+    }
+
+    // Testing with raw input
+    try {
+      System.out.println("------Usage test two--------------");
+      String rawInput = FixConstants.internalSenderIDTag + "=1" + FixConstants.printableDelimiter
+              + FixConstants.internalTargetIDTag + "=2" + FixConstants.printableDelimiter
+              + FixConstants.msgTypeTag + "=" + FixConstants.ORDER_SINGLE + FixConstants.printableDelimiter
+              + FixConstants.clientOrdIDTag + "=" + FixUtils.createUniqueID() + FixConstants.printableDelimiter
+              + FixConstants.symbolTag + "=AAL" + FixConstants.printableDelimiter
+              + FixConstants.orderQtyTag + "=10" + FixConstants.printableDelimiter
+              + FixConstants.priceTag + "=0.50" + FixConstants.printableDelimiter;
+      FixMessage fixMessage = FixMsgFactory.createMsg(
+             rawInput + FixConstants.checkSumTag + "="
+                     + FixUtils.createCheckSumString(rawInput.getBytes())
+                     + FixConstants.printableDelimiter
+      );
+      if (fixMessage.msgMap.get(FixConstants.msgTypeTag).equals(FixConstants.ORDER_SINGLE)) {
+        System.out.println("Message is a single order.");
+        System.out.println(fixMessage.getFixMsgString());
+      }
+
+      System.out.println("--------------------");
+    }
+    catch (FixFormatException | FixMessageException e) {
+      System.out.println("------Usage test two error--------------");
       System.out.println(e.getMessage());
     }
   }

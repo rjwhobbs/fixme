@@ -20,7 +20,7 @@ public class FixMessage {
   private List<String> tags = new ArrayList<>();
   private List<String> values = new ArrayList<>();
 
-  public FixMessage(String message) {
+  FixMessage(String message) {
     this.rawFixMessageBytes = FixUtils.insertSOHDelimiter(message.getBytes());
     this.fixMessageString = message;
   }
@@ -28,12 +28,12 @@ public class FixMessage {
 //  Use this constructor when you are getting a raw byte string from the buffer,
 //  it is assumed that it should contain the SOH delimiter.
 //  It is also assumed that it will contain the checkSum as it is coming from a buffer read().
-  public FixMessage(byte[] message) {
+  FixMessage(byte[] message) {
     this.rawFixMessageBytes = message;
     this.fixMessageString = new String(FixUtils.insertPrintableDelimiter(message));
   }
 
-  public void parseRawBytes() {
+  void parseRawBytes() {
     int i = 0;
     int len = this.rawFixMessageBytes.length;
     String tempTag;
@@ -63,7 +63,7 @@ public class FixMessage {
     }
   }
 
-  public void parseTagValueLists() throws FixFormatException {
+  void parseTagValueLists() throws FixFormatException {
 
     if ((tags.size() == 0 || values.size() == 0) || (tags.size() != values.size())) {
       throw new FixFormatException(FixFormatException.missingTagValue);
@@ -85,20 +85,20 @@ public class FixMessage {
     }
   }
 
-  public void validateMsgMap() throws FixMessageException {
+  void validateMsgMap() throws FixMessageException {
     if (msgMap.get(FixConstants.internalTargetIDTag) == null) {
       throw new FixMessageException(FixMessageException.missingInternalTargetID);
     }
   }
 
-  public void checkFixFormat() throws FixFormatException {
+  void checkFixFormat() throws FixFormatException {
     // This is checking if the byte string ends with a SOH char
     if (rawFixMessageBytes[rawFixMessageBytes.length - 1] != FixConstants.SOHDelimiter) {
       throw new FixFormatException(FixFormatException.missingDelimiter);
     }
   }
 
-  public void appendCheckSum() {
+  void appendCheckSum() {
     // Append to string
     this.fixMessageString =
             this.fixMessageString
@@ -125,9 +125,6 @@ public class FixMessage {
 
   public String getFixMsgString() {
     return fixMessageString;
-  }
-
-  public void printRawBytes() {
   }
 }
 
