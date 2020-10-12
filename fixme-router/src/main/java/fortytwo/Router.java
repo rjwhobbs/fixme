@@ -7,8 +7,10 @@ import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.HashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 public class Router {
     public static void main( String[] args ) {
@@ -31,12 +33,21 @@ public class Router {
 
 class Server {
     private static BufferedReader blockerReader;
-
-//    private List<Client> brokerTable;
-//    private List<Client> marketTable;
+    private static Pattern pattern;
+    private static Executor pool;
+    private static int brokersIndex;
+    private static int marketsIndex;
+    private static HashMap<String, ClientAttachment> brokers;
+    private static HashMap<String, ClientAttachment> markets;
 
     public Server() {
         blockerReader = new BufferedReader(new InputStreamReader(System.in));
+        pattern = Pattern.compile("^\\\\(\\d+)\\s+(.+)");
+        pool = Executors.newFixedThreadPool(200);
+        brokers = new HashMap<>();
+        markets = new HashMap<>();
+        brokersIndex = 1;
+        marketsIndex = 1;
     }
 
     public void acceptBroker() {
