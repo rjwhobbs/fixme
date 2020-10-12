@@ -1,14 +1,39 @@
 package fortytwo;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class Router {
-    private List<Client> brokerTable;
-    private List<Client> marketTable;
+    public static void main( String[] args ) {
+        System.out.println("Hello from Router....");
+        final Server server = new Server();
+        Executor pool = Executors.newFixedThreadPool(2);
+        pool.execute(new Runnable() {
+            @Override
+            public void run() {
+                server.acceptBroker();
+            }
+        });
+        pool.execute(new Runnable() {
+            @Override
+            public void run() {
+                server.acceptMarket();
+            }
+        });
+    }
+}
+
+class Server {
+    private static BufferedReader blockerReader = new BufferedReader(new InputStreamReader(System.in));
+//    private List<Client> brokerTable;
+//    private List<Client> marketTable;
 
     /**
      *
@@ -33,7 +58,7 @@ public class Router {
                     }
                 });
                 System.out.println("Listening on port 5000");
-                System.in.read();
+                blocker();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -63,23 +88,21 @@ public class Router {
                         System.out.println("Something went wrong");
                     }
                 });
+                System.out.println("Listening on port 5001");
+                blocker();
             }
         } catch (Exception e) {
 
         }
-        System.out.println("Listening on port 5001");
     }
 
-
-    public static void main( String[] args ) {
-        System.out.println( "Hello from router" );
-        Router router = new Router();
-        //TODO do we need Thread to open multiple ports?
-        router.acceptBroker();
-        router.acceptMarket();
+    public static void blocker() {
+        try {
+            blockerReader.readLine();
+            blocker();
+        }
+        catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
     }
-}
-
-class Client {
-
 }
