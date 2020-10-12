@@ -12,7 +12,6 @@ import java.util.concurrent.Executors;
 
 public class Router {
     public static void main( String[] args ) {
-        System.out.println("Hello from Router....");
         final Server server = new Server();
         Executor pool = Executors.newFixedThreadPool(2);
         pool.execute(new Runnable() {
@@ -31,13 +30,15 @@ public class Router {
 }
 
 class Server {
-    private static BufferedReader blockerReader = new BufferedReader(new InputStreamReader(System.in));
+    private static BufferedReader blockerReader;
+
 //    private List<Client> brokerTable;
 //    private List<Client> marketTable;
 
-    /**
-     *
-     */
+    public Server() {
+        blockerReader = new BufferedReader(new InputStreamReader(System.in));
+    }
+
     public void acceptBroker() {
         try (final AsynchronousServerSocketChannel brokerChannel = AsynchronousServerSocketChannel.open()) {
             InetSocketAddress hostAddress = new InetSocketAddress("localhost", 5000);
@@ -65,9 +66,6 @@ class Server {
         }
     }
 
-    /**
-     *
-     */
     public void acceptMarket() {
         try (final AsynchronousServerSocketChannel marketChannel = AsynchronousServerSocketChannel.open()) {
             InetSocketAddress hostAddress = new InetSocketAddress("localhost", 5001);
