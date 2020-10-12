@@ -79,9 +79,6 @@ public class FixUtils {
     throw new FixCheckSumException(FixCheckSumException.checkSumMissing);
   }
 
-//  public static void valCheckSum(byte[] message) {
-//
-//  }
 
   public static String createUniqueID() {
     int randNum = rand.nextInt(100000);
