@@ -49,7 +49,7 @@ final class Server {
                         }
                     }
 
-                    private void registerBroker(AsynchronousSocketChannel client) {
+                    private void registerBroker(AsynchronousSocketChannel client)  {
                         try {
                             //TODO generate unique six digit ID
                             String brokerID = Integer.toString(++brokersIndex);
@@ -57,7 +57,6 @@ final class Server {
 
                             client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                             ClientAttachment clientAttachment = new ClientAttachment(client, brokerID);
-                            //Debug
                             System.out.println(brokers.entrySet());
                             client.read(clientAttachment.buffer, clientAttachment, new BrokerHandler());
                         } catch (InterruptedException | ExecutionException e) {
@@ -68,7 +67,7 @@ final class Server {
 
                     @Override
                     public void failed(Throwable exc, Object attachment) {
-
+                        System.err.println("Something went wrong while connecting Broker to Router");
                     }
                 });
                 System.out.println("Listening on port 5000");
@@ -91,19 +90,35 @@ final class Server {
                         if (result.isOpen()) {
                             marketChannel.accept(null, this);
                             System.out.println("Market Connected");
+                            registerMarket(result);
+                        }
+                    }
+
+                    private void registerMarket(AsynchronousSocketChannel client) {
+                        try {
+                            String marketID = Integer.toString(++marketsIndex);
+                            String welcomeMessage = "Yello, you are now connected to the router, your ID is " + marketID;
+
+                            client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
+                            ClientAttachment clientAttachment = new ClientAttachment(client, marketID);
+                            //Debug
+                            System.out.println(brokers.entrySet());
+                            client.read(clientAttachment.buffer, clientAttachment, new MarketHandler());
+                        } catch (InterruptedException | ExecutionException e) {
+                             System.err.println("Something went wrong while trying to register a broker");
                         }
                     }
 
                     @Override
                     public void failed(Throwable exc, Object attachment) {
-                        System.out.println("Something went wrong");
+                        System.out.println("Something went wrong while connecting Market to Router");
                     }
                 });
                 System.out.println("Listening on port 5001");
                 blocker();
             }
         } catch (Exception e) {
-
+            System.out.println("Router Error in acceptMarket(): " + e.getMessage());
         }
     }
 
@@ -117,7 +132,15 @@ final class Server {
         }
     }
 
-    static class BrokerHandler implements CompletionHandler<Integer, ClientAttachment> {
+    private void sendToMarket(String message, String senderID) {
+        pool.execute(new SendToMarket(message, senderID));
+    }
+
+    private void sendToBroker(String message, String senderID) {
+        pool.execute(new SendToBroker(message, senderID));
+    }
+
+    class BrokerHandler implements CompletionHandler<Integer, ClientAttachment> {
         @Override
         public void completed(Integer result, ClientAttachment attachment) {
             try {
@@ -136,14 +159,9 @@ final class Server {
                     attachment.client.close();
                     attachment.client = null;
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-
-        private void sendToMarket(String message, String senderID) {
-            pool.execute(new SendToMarket(message, senderID));
         }
 
         @Override
@@ -151,46 +169,121 @@ final class Server {
             System.err.println("Failed method in BrokerHandler called: " + exc.getMessage());
         }
 
-        class SendToMarket implements Runnable {
-            private String message;
-            private String senderID;
+    }
 
-            SendToMarket(String message, String senderID) {
-                this.message = message.trim();
-                this.senderID = senderID;
+    class MarketHandler implements CompletionHandler<Integer, ClientAttachment> {
+
+        @Override
+        public void completed(Integer result, ClientAttachment attachment) {
+            try {
+                if (result != -1) {
+                    attachment.buffer.flip();
+                    int limit = attachment.buffer.limit();
+                    byte[] bytes = new byte[limit];
+                    attachment.buffer.get(bytes, 0, limit);
+                    String line = new String(bytes);
+                    //Debug
+                    System.out.println(line);
+                    sendToBroker(line, attachment.id);
+                    attachment.buffer.clear();
+                    attachment.client.read(attachment.buffer, attachment, this);
+                } else {
+                    attachment.client.close();
+                    attachment.client = null;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+        }
 
-            @Override
-            public void run() {
-                Matcher m = pattern.matcher(message);
-                String marketID;
-                String extractedMessage;
+        @Override
+        public void failed(Throwable exc, ClientAttachment attachment) {
+            System.err.println("Failed method in MarketHandler called: " + exc.getMessage());
+        }
+    }
 
-                try {
-                    if (m.find()) {
-                        marketID = m.group(1);
-                        extractedMessage = m.group(2) + "\n";
-                        ClientAttachment clientAttachment = markets.get(marketID);
-                        if (clientAttachment != null && clientAttachment.client != null) {
-                            clientAttachment.client.write(ByteBuffer.wrap(extractedMessage.getBytes())).get();
-                        } else {
-                            printToSender("Market has disconnected.\n");
-                        }
+    class SendToMarket implements Runnable {
+        private String message;
+        private String senderID;
 
+        SendToMarket(String message, String senderID) {
+            this.message = message.trim();
+            this.senderID = senderID;
+        }
+
+        @Override
+        public void run() {
+            Matcher m = pattern.matcher(message);
+            String marketID;
+            String extractedMessage;
+
+            try {
+                if (m.find()) {
+                    marketID = m.group(1);
+                    extractedMessage = m.group(2) + "\n";
+                    ClientAttachment clientAttachment = markets.get(marketID);
+                    if (clientAttachment != null && clientAttachment.client != null) {
+                        clientAttachment.client.write(ByteBuffer.wrap(extractedMessage.getBytes())).get();
                     } else {
-                        printToSender("Bad message format. usage: \\<id> <your message>.\n");
+                        printToSender("Market has disconnected.\n");
                     }
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
-                }
-            }
 
-            private void printToSender(String msg) throws ExecutionException, InterruptedException {
-                ClientAttachment sendingClient = brokers.get(senderID);
-                if (sendingClient != null) {
-                    sendingClient.client.write(ByteBuffer.wrap(msg.getBytes())).get();
+                } else {
+                    printToSender("Bad message format. usage: \\<id> <your message>.\n");
                 }
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void printToSender(String msg) throws ExecutionException, InterruptedException {
+            ClientAttachment sendingClient = brokers.get(senderID);
+            if (sendingClient != null) {
+                sendingClient.client.write(ByteBuffer.wrap(msg.getBytes())).get();
             }
         }
     }
+
+    class SendToBroker implements Runnable {
+        private String message;
+        private String senderID;
+
+        public SendToBroker(String message, String senderID) {
+            this.message = message;
+            this.senderID = senderID;
+        }
+
+        @Override
+        public void run() {
+            Matcher m = pattern.matcher(message);
+            String brokerID;
+            String extractedMessage;
+
+            try {
+                if (m.find()) {
+                    brokerID = m.group(1);
+                    extractedMessage = m.group(2) + "\n";
+                    ClientAttachment clientAttachment = markets.get(brokerID);
+                    if (clientAttachment != null && clientAttachment.client != null) {
+                        clientAttachment.client.write(ByteBuffer.wrap(extractedMessage.getBytes())).get();
+                    } else {
+                        printToSender("Broker has disconnected.\n");
+                    }
+
+                } else {
+                    printToSender("Bad message format. usage: \\<id> <your message>.\n");
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void printToSender(String msg) throws ExecutionException, InterruptedException {
+            ClientAttachment sendingClient = markets.get(senderID);
+            if (sendingClient != null) {
+                sendingClient.client.write(ByteBuffer.wrap(msg.getBytes())).get();
+            }
+        }
+    }
+
 }
