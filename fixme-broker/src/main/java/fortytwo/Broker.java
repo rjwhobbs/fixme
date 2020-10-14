@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -87,35 +88,28 @@ public class Broker {
 
     private void brokerInputReader() throws IOException, ExecutionException, InterruptedException {
         String line = "";
-        String orderType = "";
+        String orderSide = "";
         String targetId = "";
+        String symbol = "";
+        String quantity = "";
+        String price = "";
         int i = 0;
         System.out.println("Type \"EXIT\" to quit.");
         while (runInputReader) {
             switch (i) {
                 case 0:
                     System.out.print("Choose order type. (1) Buy. (2) Sell: ");
-                    line = getNextLine();
-                    if (line.toLowerCase().equals("exit")) {
+                    if ((line = getNextLine()).toLowerCase().equals("exit")) {
                         runInputReader = false;
                         break ;
                     }
-                    if (line.equals("1")) {
-                        orderType = FixConstants.BUY_SIDE;
+                    if (!(orderSide = BrokerUtils.processOrderType(line)).equals("")) {
                         ++i;
-                    }
-                    else if (line.equals("2")) {
-                        orderType = FixConstants.SELL_SIDE;
-                        ++i;
-                    }
-                    else {
-                        System.out.println("Input \"" + line + "\" not recognised.");
                     }
                     break;
                 case 1:
-                    System.out.print("Choose the target market ID: ");
-                    line = getNextLine();
-                    if (line.toLowerCase().equals("exit")) {
+                    System.out.print("Give the target market ID: ");
+                    if ((line = getNextLine()).toLowerCase().equals("exit")) {
                         runInputReader = false;
                         break ;
                     }
@@ -123,30 +117,59 @@ public class Broker {
                     ++i;
                     break;
                 case 2:
-                    System.out.println("Here is your message: " + targetId + " " + orderType + ".");
+                    System.out.print("Give the instrument symbol: ");
+                    if ((line = getNextLine()).toLowerCase().equals("exit")) {
+                        runInputReader = false;
+                        break ;
+                    }
+                    symbol = line;
+                    ++i;
+                    break;
+                case 3:
+                    System.out.println("Give the quantity: ");
+                    if ((line = getNextLine()).toLowerCase().equals("exit")) {
+                        runInputReader = false;
+                        break ;
+                    }
+                    quantity = line;
+                    ++i;
+                    break;
+                case 4:
+                    System.out.println("Give the price (format: x.xx) : ");
+                    if ((line = getNextLine()).toLowerCase().equals("exit")) {
+                        runInputReader = false;
+                        break ;
+                    }
+                    price = line;
+                    ++i;
+                    break;
+                case 5:
+                    String[] userInputs = {brokerId, targetId, orderSide, symbol, quantity, price};
+                    System.out.println("Here is your message: " + Arrays.toString(userInputs) + ".");
                     System.out.print("Send (y/n) ?: ");
-                    line = getNextLine();
-                    if (line.toLowerCase().equals("exit")) {
+                    if ((line = getNextLine()).toLowerCase().equals("exit")) {
                         runInputReader = false;
                         break ;
                     }
                     if (line.toLowerCase().equals("y")) {
-                        String query = targetId + " " + orderType;
+                        String query = targetId + " " + orderSide;
                         client.write(ByteBuffer.wrap(query.getBytes())).get();
                         System.out.println("Message sent");
                         i = 0;
-                        orderType = "";
+                        orderSide = "";
                         targetId = "";
                     }
                     else if (line.toLowerCase().equals("n")) {
                         System.out.println("Message not sent");
                         i = 0;
-                        orderType = "";
+                        orderSide = "";
                         targetId = "";
                     }
                     else {
                         System.out.println("Input \"" + line + "\" not recognized.");
                     }
+                    break;
+                default:
                     break;
             }
         }
