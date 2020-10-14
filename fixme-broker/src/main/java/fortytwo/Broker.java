@@ -59,15 +59,12 @@ public class Broker {
     }
 
     private void readWriteHandler() {
-        String line;
         ByteBuffer buffer = ByteBuffer.allocate(512);
         ReadAttachment readAttachment = new ReadAttachment(buffer);
         client.read(readAttachment.buffer, readAttachment, new ReadHandler());
 
         try {
-            while ((line = reader.readLine()) != null) {
-                client.write(ByteBuffer.wrap(line.getBytes())).get();
-            }
+            brokerInputReader();
             System.out.println("Broker has disconnected.");
             stop();
         } catch (IOException e) {
@@ -76,6 +73,13 @@ public class Broker {
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void brokerInputReader() throws IOException, ExecutionException, InterruptedException {
+        String line;
+        while ((line = reader.readLine()) != null) {
+            client.write(ByteBuffer.wrap(line.getBytes())).get();
         }
     }
 
@@ -121,16 +125,6 @@ public class Broker {
             e.printStackTrace();
         }
         System.exit(0);
-    }
-
-
-    public static void blocker() {
-        try {
-            blockerReader.readLine();
-            blocker();
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
     }
 
     public static void main(String[] args) {

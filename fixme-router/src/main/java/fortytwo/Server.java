@@ -53,11 +53,13 @@ final class Server {
                     private void registerBroker(AsynchronousSocketChannel client)  {
                         try {
                             //TODO generate unique six digit ID
-                            String brokerID = Integer.toString(++brokersIndex);
-                            String welcomeMessage = "Yello, you are now connected to the router, your ID is " + brokerID;
+                            String brokerID = Integer.toString(brokersIndex++);
+                            String welcomeMessage =
+                                    "Yello, you are now connected to the router, your ID is " + brokerID + "\n";
 
                             client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                             ClientAttachment clientAttachment = new ClientAttachment(client, brokerID);
+                            brokers.put(brokerID, clientAttachment);
                             System.out.println(brokers.entrySet());
                             client.read(clientAttachment.buffer, clientAttachment, new BrokerHandler());
                         } catch (InterruptedException | ExecutionException e) {
@@ -98,11 +100,13 @@ final class Server {
 
                     private void registerMarket(AsynchronousSocketChannel client) {
                         try {
-                            String marketID = Integer.toString(++marketsIndex);
-                            String welcomeMessage = "Yello, you are now connected to the router, your ID is " + marketID;
+                            String marketID = Integer.toString(marketsIndex++);
+                            String welcomeMessage =
+                                    "Yello, you are now connected to the router, your ID is " + marketID + "\n";
 
                             client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                             ClientAttachment clientAttachment = new ClientAttachment(client, marketID);
+                            markets.put(marketID, clientAttachment);
                             //Debug
                             System.out.println(brokers.entrySet());
                             client.read(clientAttachment.buffer, clientAttachment, new MarketHandler());
