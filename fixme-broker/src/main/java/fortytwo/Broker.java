@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 public class Broker {
     private AsynchronousSocketChannel client;
     private Future<Void> future;
-    private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    private static BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
     private static BufferedReader blockerReader = new BufferedReader(new InputStreamReader(System.in));
     private static Pattern senderPattern = Pattern.compile("^market#(\\d+)");
     private static Pattern idPattern = Pattern.compile(
@@ -79,8 +79,10 @@ public class Broker {
     }
 
     private void brokerInputReader() throws IOException, ExecutionException, InterruptedException {
-        String line;
-        while ((line = reader.readLine()) != null) {
+        String line = "";
+        while (!line.equals("EXIT")) {
+            System.out.println("Choose order type: (1) Buy. (2) Sell.");
+            line = getNextLine();
             client.write(ByteBuffer.wrap(line.getBytes())).get();
         }
     }
@@ -127,6 +129,21 @@ public class Broker {
             e.printStackTrace();
         }
         System.exit(0);
+    }
+
+    private static String getNextLine() {
+        String line;
+        try {
+            line = reader.readLine();
+            if (line == null) {
+                return "EXIT";
+            }
+            return line;
+        }
+        catch (IOException e) {
+            System.out.println("There was an error reading from the console: " + e.getMessage());
+            return "EXIT";
+        }
     }
 
     public static void main(String[] args) {
