@@ -111,7 +111,7 @@ final class Server {
                             System.out.println(brokers.entrySet());
                             client.read(clientAttachment.buffer, clientAttachment, new MarketHandler());
                         } catch (InterruptedException | ExecutionException e) {
-                             System.err.println("Something went wrong while trying to register a broker");
+                             System.err.println("Something went wrong while trying to register a market");
                         }
                     }
 
@@ -269,7 +269,7 @@ final class Server {
                 if (m.find()) {
                     brokerID = m.group(1);
                     extractedMessage = m.group(2) + "\n";
-                    ClientAttachment clientAttachment = markets.get(brokerID);
+                    ClientAttachment clientAttachment = brokers.get(brokerID);
                     if (clientAttachment != null && clientAttachment.client != null) {
                         clientAttachment.client.write(ByteBuffer.wrap(extractedMessage.getBytes())).get();
                     } else {
