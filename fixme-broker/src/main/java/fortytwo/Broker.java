@@ -166,6 +166,7 @@ public class Broker {
                 attachment.buffer.clear();
                 client.read(attachment.buffer, attachment, this);
             } else {
+                runInputReader = false;
                 System.out.println("Server has disconnected, please hit enter to close the broker.");
                 stop();
             }
@@ -189,7 +190,7 @@ public class Broker {
         try {
             client.close();
             reader.close();
-            System.out.println("cheers");
+//            System.out.println("cheers");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -203,10 +204,13 @@ public class Broker {
             if (line == null) {
                 return "EXIT";
             }
+            if (!runInputReader) {
+                return "EXIT";
+            }
             return line.trim();
         }
         catch (IOException e) {
-            System.out.println("There was an error reading from the console: " + e.getMessage());
+//            System.out.println("There was an error reading from the console: " + e.getMessage());
             return "EXIT";
         }
     }
