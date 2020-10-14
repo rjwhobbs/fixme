@@ -19,7 +19,9 @@ public class Broker {
     private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
     private static BufferedReader blockerReader = new BufferedReader(new InputStreamReader(System.in));
     private static Pattern senderPattern = Pattern.compile("^market#(\\d+)");
-    private static Pattern idPattern = Pattern.compile("^Welcome to whisper chat, your ID is (\\d+)$");
+    private static Pattern idPattern = Pattern.compile(
+            "^Yello, you are now connected to the router, your ID is (\\d+)"
+    );
     private static String brokerId;
     private HashMap<String, Object> attachment = new HashMap<>();
 
