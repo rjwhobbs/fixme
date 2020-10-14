@@ -1,5 +1,6 @@
 package fortytwo;
 
+import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -53,7 +54,7 @@ final class Server {
                         try {
                             //TODO generate unique six digit ID
                             String brokerID = Integer.toString(++brokersIndex);
-                            String welcomeMessage = "Yellow, you are now connected to the router, your ID is " + brokerID;
+                            String welcomeMessage = "Yello, you are now connected to the router, your ID is " + brokerID;
 
                             client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                             ClientAttachment clientAttachment = new ClientAttachment(client, brokerID);
@@ -67,14 +68,15 @@ final class Server {
 
                     @Override
                     public void failed(Throwable exc, Object attachment) {
-                        System.err.println("Something went wrong while connecting Broker to Router");
+                        System.err.println("Something went wrong while connecting Broker to Router: " + exc.getMessage());
                     }
                 });
                 System.out.println("Listening on port 5000");
                 blocker();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Router Error in acceptBroker(): " + e.getMessage());
+
         }
     }
 
@@ -160,7 +162,7 @@ final class Server {
                     attachment.client = null;
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.println(e.getMessage());
             }
         }
 
@@ -192,7 +194,7 @@ final class Server {
                     attachment.client = null;
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.println(e.getMessage());
             }
         }
 
@@ -232,7 +234,7 @@ final class Server {
                     printToSender("Bad message format. usage: \\<id> <your message>.\n");
                 }
             } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
+                System.err.println(e.getMessage());
             }
         }
 
@@ -274,7 +276,7 @@ final class Server {
                     printToSender("Bad message format. usage: \\<id> <your message>.\n");
                 }
             } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
+                System.err.println(e.getMessage());
             }
         }
 
