@@ -1,5 +1,10 @@
 package fortytwo;
 
+import fortytwo.constants.FixConstants;
+import fortytwo.fixexceptions.FixFormatException;
+import fortytwo.fixexceptions.FixMessageException;
+import fortytwo.utils.FixUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,6 +17,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+//import fortytwo.FixMessage;
 
 public class Broker {
     private AsynchronousSocketChannel client;
@@ -24,6 +30,7 @@ public class Broker {
     );
     private static String brokerId;
     private HashMap<String, Object> attachment = new HashMap<>();
+    private static Boolean runInputReader = true;
 
     Broker() {
         try {
@@ -80,10 +87,68 @@ public class Broker {
 
     private void brokerInputReader() throws IOException, ExecutionException, InterruptedException {
         String line = "";
-        while (!line.equals("EXIT")) {
-            System.out.println("Choose order type: (1) Buy. (2) Sell.");
-            line = getNextLine();
-            client.write(ByteBuffer.wrap(line.getBytes())).get();
+        String orderType = "";
+        String targetId = "";
+        int i = 0;
+        System.out.println("Type \"EXIT\" to quit.");
+        while (runInputReader) {
+            switch (i) {
+                case 0:
+                    System.out.print("Choose order type. (1) Buy. (2) Sell: ");
+                    line = getNextLine();
+                    if (line.toLowerCase().equals("exit")) {
+                        runInputReader = false;
+                        break ;
+                    }
+                    if (line.equals("1")) {
+                        orderType = FixConstants.BUY_SIDE;
+                        ++i;
+                    }
+                    else if (line.equals("2")) {
+                        orderType = FixConstants.SELL_SIDE;
+                        ++i;
+                    }
+                    else {
+                        System.out.println("Input \"" + line + "\" not recognised.");
+                    }
+                    break;
+                case 1:
+                    System.out.print("Choose the target market ID: ");
+                    line = getNextLine();
+                    if (line.toLowerCase().equals("exit")) {
+                        runInputReader = false;
+                        break ;
+                    }
+                    targetId = line;
+                    ++i;
+                    break;
+                case 2:
+                    System.out.println("Here is your message: " + targetId + " " + orderType + ".");
+                    System.out.print("Send (y/n) ?: ");
+                    line = getNextLine();
+                    if (line.toLowerCase().equals("exit")) {
+                        runInputReader = false;
+                        break ;
+                    }
+                    if (line.toLowerCase().equals("y")) {
+                        String query = targetId + " " + orderType;
+                        client.write(ByteBuffer.wrap(query.getBytes())).get();
+                        System.out.println("Message sent");
+                        i = 0;
+                        orderType = "";
+                        targetId = "";
+                    }
+                    else if (line.toLowerCase().equals("n")) {
+                        System.out.println("Message not sent");
+                        i = 0;
+                        orderType = "";
+                        targetId = "";
+                    }
+                    else {
+                        System.out.println("Input \"" + line + "\" not recognized.");
+                    }
+                    break;
+            }
         }
     }
 
@@ -138,7 +203,7 @@ public class Broker {
             if (line == null) {
                 return "EXIT";
             }
-            return line;
+            return line.trim();
         }
         catch (IOException e) {
             System.out.println("There was an error reading from the console: " + e.getMessage());

@@ -139,6 +139,8 @@ final class Server {
     }
 
     private void sendToMarket(String message, String senderID) {
+        // checksum
+        // fm.msgMap(Fix.)
         pool.execute(new SendToMarket(message, senderID));
     }
 

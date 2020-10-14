@@ -361,6 +361,8 @@ class TestFactory {
                      + FixConstants.printableDelimiter
       );
       if (fixMessage.msgMap.get(FixConstants.msgTypeTag).equals(FixConstants.ORDER_SINGLE)) {
+        String targetId = fixMessage.msgMap.get(FixConstants.targetCompIDTag);
+
         System.out.println("Message is a single order.");
         System.out.println(fixMessage.getFixMsgString());
       }
