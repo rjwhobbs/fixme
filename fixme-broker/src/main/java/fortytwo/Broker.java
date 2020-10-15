@@ -145,7 +145,6 @@ public class Broker {
                     ++i;
                     break;
                 case 5:
-                    String[] userInputs = {orderSide, brokerId, targetId, symbol, quantity, price};
                     System.out.println("Here is your message preview: (Client order ID and checksum will be added once confirmed)\ny"
                             + FixUtils.fixMsgPreview(
                                     orderSide, brokerId, targetId, symbol, quantity, price
@@ -157,12 +156,14 @@ public class Broker {
                         break ;
                     }
                     if (line.toLowerCase().equals("y")) {
-                        String query = targetId + " " + orderSide;
                         try {
                             fixMessage = FixMsgFactory.createMsg(
                                     brokerId, targetId, orderSide, symbol, quantity, price
                             );
-                            System.out.println("Sent: " + fixMessage.getFixMsgString());
+                            System.out.println("Client order ID# "
+                                    + fixMessage.msgMap.get(FixConstants.clientOrdIDTag)
+                                    + " sent : " + fixMessage.getFixMsgString()
+                            );
                             client.write(ByteBuffer.wrap(fixMessage.getRawFixMsgBytes())).get();
                             i = 0;
                         }

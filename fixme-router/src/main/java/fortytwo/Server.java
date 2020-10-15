@@ -139,8 +139,10 @@ final class Server {
     }
 
     private void sendToMarket(String message, String senderID) {
-        // checksum
-        // fm.msgMap(Fix.)
+        //  incoming bytes[] msg 123=123|123=123|.....
+        //  fm = FF.creatMsg(msg)
+        //  FixUtil.valCh(fm.getString())
+        //  senderId = fm.msgMap.get(FC.internalsenderTag)
         pool.execute(new SendToMarket(message, senderID));
     }
 
