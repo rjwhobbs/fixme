@@ -12,7 +12,6 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -32,19 +31,11 @@ public class Broker {
     private HashMap<String, Object> attachment = new HashMap<>();
     private static Boolean runInputReader = true;
 
-    Broker() {
-        try {
-            client = AsynchronousSocketChannel.open();
-            InetSocketAddress hostAddress = new InetSocketAddress("localhost", 5000);
-            future = client.connect(hostAddress);
-            future.get();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+    void start() throws ExecutionException, InterruptedException, IOException {
+        client = AsynchronousSocketChannel.open();
+        InetSocketAddress hostAddress = new InetSocketAddress("localhost", 5000);
+        future = client.connect(hostAddress);
+        future.get();
     }
 
     void readId() throws ExecutionException, InterruptedException, IOException {
@@ -76,16 +67,15 @@ public class Broker {
             brokerInputReader();
             System.out.println("Broker has disconnected.");
             stop();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        }  catch (InterruptedException | ExecutionException e) {
+            System.out.println("There was an error taking input from the broker: " + e.getMessage());
+            System.out.println("Exiting...");
+            stop();
         }
+
     }
 
-    private void brokerInputReader() throws IOException, ExecutionException, InterruptedException {
+    private void brokerInputReader() throws ExecutionException, InterruptedException {
         String line = "";
         String orderSide = "";
         String targetId = "";
@@ -225,7 +215,6 @@ public class Broker {
         try {
             client.close();
             reader.close();
-//            System.out.println("cheers");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -245,7 +234,6 @@ public class Broker {
             return line.trim();
         }
         catch (IOException e) {
-//            System.out.println("There was an error reading from the console: " + e.getMessage());
             return "EXIT";
         }
     }
@@ -253,6 +241,7 @@ public class Broker {
     public static void main(String[] args) {
         Broker broker = new Broker();
         try {
+            broker.start();
             broker.readId();
             broker.readWriteHandler();
         } catch (InterruptedException | ExecutionException | IOException e ) {
