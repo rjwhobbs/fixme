@@ -43,7 +43,7 @@ public abstract class FixMsgFactory {
     valQuantityInput(quantity);
     valPriceInput(price);
     FixMessage fixMessage;
-    String finalBuyMsg = buySellTemplate(
+    String finalBuyMsg = FixUtils.buySellTemplate(
             FixConstants.BUY_SIDE,
             internalSenderID,
             internalTargetID,
@@ -73,7 +73,7 @@ public abstract class FixMsgFactory {
     valQuantityInput(quantity);
     valPriceInput(price);
     FixMessage fixMessage;
-    String finalSellMsg = buySellTemplate(
+    String finalSellMsg = FixUtils.buySellTemplate(
             FixConstants.SELL_SIDE,
             internalSenderID,
             internalTargetID,
@@ -165,24 +165,6 @@ public abstract class FixMsgFactory {
     catch (NumberFormatException e) {
       throw new FixFormatException(FixFormatException.quantityFormat);
     }
-  }
-
-  private static String buySellTemplate(
-          String side,
-          String internalSenderID,
-          String internalTargetID,
-          String symbol,
-          String quantity,
-          String price
-  ) {
-    return FixConstants.internalSenderIDTag + "=" + internalSenderID + FixConstants.printableDelimiter
-            + FixConstants.internalTargetIDTag + "=" + internalTargetID + FixConstants.printableDelimiter
-            + FixConstants.msgTypeTag + "=" + FixConstants.ORDER_SINGLE + FixConstants.printableDelimiter
-            + FixConstants.sideTag + "=" + side + FixConstants.printableDelimiter
-            + FixConstants.symbolTag + "=" + symbol + FixConstants.printableDelimiter
-            + FixConstants.priceTag + "=" + price + FixConstants.printableDelimiter
-            + FixConstants.orderQtyTag + "=" + quantity + FixConstants.printableDelimiter
-            + FixConstants.clientOrdIDTag + "=" + FixUtils.createUniqueID() + FixConstants.printableDelimiter;
   }
 
   private static String execReportTemplate(

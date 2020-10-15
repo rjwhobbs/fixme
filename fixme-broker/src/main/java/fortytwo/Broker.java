@@ -98,7 +98,7 @@ public class Broker {
         while (runInputReader) {
             switch (i) {
                 case 0:
-                    System.out.print("Choose order type. (1) Buy. (2) Sell: ");
+                    System.out.println("Choose order type. (1) Buy. (2) Sell: ");
                     if ((line = getNextLine()).toLowerCase().equals("exit")) {
                         runInputReader = false;
                         break ;
@@ -108,7 +108,7 @@ public class Broker {
                     }
                     break;
                 case 1:
-                    System.out.print("Give the target market ID: ");
+                    System.out.println("Give the target market ID: ");
                     if ((line = getNextLine()).toLowerCase().equals("exit")) {
                         runInputReader = false;
                         break ;
@@ -117,7 +117,7 @@ public class Broker {
                     ++i;
                     break;
                 case 2:
-                    System.out.print("Give the instrument symbol: ");
+                    System.out.println("Give the instrument symbol: ");
                     if ((line = getNextLine()).toLowerCase().equals("exit")) {
                         runInputReader = false;
                         break ;
@@ -146,7 +146,7 @@ public class Broker {
                 case 5:
                     String[] userInputs = {brokerId, targetId, orderSide, symbol, quantity, price};
                     System.out.println("Here is your message: " + Arrays.toString(userInputs) + ".");
-                    System.out.print("Send (y/n) ?: ");
+                    System.out.println("Send (y/n) ?: ");
                     if ((line = getNextLine()).toLowerCase().equals("exit")) {
                         runInputReader = false;
                         break ;
