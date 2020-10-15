@@ -93,6 +93,7 @@ public class Broker {
         String symbol = "";
         String quantity = "";
         String price = "";
+        FixMessage fixMessage = null;
         int i = 0;
         System.out.println("Type \"EXIT\" to quit.");
         while (runInputReader) {
@@ -144,8 +145,8 @@ public class Broker {
                     ++i;
                     break;
                 case 5:
-                    String[] userInputs = {brokerId, targetId, orderSide, symbol, quantity, price};
-                    System.out.println("Here is your message preview: (Client order ID and checksum will be added once confirmed)"
+                    String[] userInputs = {orderSide, brokerId, targetId, symbol, quantity, price};
+                    System.out.println("Here is your message preview: (Client order ID and checksum will be added once confirmed)\ny"
                             + FixUtils.fixMsgPreview(
                                     orderSide, brokerId, targetId, symbol, quantity, price
                             ) + "."
@@ -157,17 +158,46 @@ public class Broker {
                     }
                     if (line.toLowerCase().equals("y")) {
                         String query = targetId + " " + orderSide;
-                        client.write(ByteBuffer.wrap(query.getBytes())).get();
-                        System.out.println("Message sent");
-                        i = 0;
-                        orderSide = "";
-                        targetId = "";
+                        if (orderSide.equals(FixConstants.BUY_SIDE)) {
+                            try {
+                                fixMessage = FixMsgFactory.createBuyMsg(
+                                        brokerId, targetId, symbol, quantity, price
+                                );
+                                System.out.println("Sent: " + fixMessage.getFixMsgString());
+                                client.write(ByteBuffer.wrap(fixMessage.getRawFixMsgBytes())).get();
+                                i = 0;
+                            }
+                            catch (FixMessageException | FixFormatException e) {
+                                System.out.println("The was an error in your message:");
+                                System.out.println(e.getMessage());
+                                fixMessage = null;
+                                i = 0;
+                            }
+                        }
+                        else if (orderSide.equals(FixConstants.SELL_SIDE)) {
+                            try {
+                                fixMessage = FixMsgFactory.createBuyMsg(
+                                        brokerId, targetId, symbol, quantity, price
+                                );
+                                System.out.println("Sent: " + fixMessage.getFixMsgString());
+                                client.write(ByteBuffer.wrap(fixMessage.getRawFixMsgBytes())).get();
+                                i = 0;
+                            }
+                            catch (FixMessageException | FixFormatException e) {
+                                System.out.println("The was an error in your message:");
+                                System.out.println(e.getMessage());
+                                fixMessage = null;
+                                i = 0;
+                            }
+                        }
+                        else {
+                            System.out.println("There seems to be a problem with processing your request, please try again.");
+                            i = 0;
+                        }
                     }
                     else if (line.toLowerCase().equals("n")) {
                         System.out.println("Message not sent");
                         i = 0;
-                        orderSide = "";
-                        targetId = "";
                     }
                     else {
                         System.out.println("Input \"" + line + "\" not recognized.");
