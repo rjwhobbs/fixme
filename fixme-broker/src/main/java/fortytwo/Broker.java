@@ -134,7 +134,7 @@ public class Broker {
                     ++i;
                     break;
                 case 5:
-                    System.out.println("Here is your message preview: (Client order ID and checksum will be added once confirmed)\ny"
+                    System.out.println("Here is your message preview: (Client order ID and checksum will be added once confirmed)\n"
                             + FixUtils.fixMsgPreview(
                                     orderSide, brokerId, targetId, symbol, quantity, price
                             ) + "."
@@ -187,7 +187,6 @@ public class Broker {
                 attachment.buffer.get(bytes, 0, limit);
                 String line = new String(bytes);
                 System.out.print(line);
-                ;
                 attachment.buffer.clear();
                 client.read(attachment.buffer, attachment, this);
             } else {

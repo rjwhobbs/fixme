@@ -7,6 +7,7 @@ import fortytwo.fixexceptions.FixMessageException;
 import fortytwo.utils.FixUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -29,8 +30,9 @@ public class FixMessage {
 //  it is assumed that it should contain the SOH delimiter.
 //  It is also assumed that it will contain the checkSum as it is coming from a buffer read().
   FixMessage(byte[] message) {
+    byte[] tempBytes = Arrays.copyOf(message, message.length);
     this.rawFixMessageBytes = message;
-    this.fixMessageString = new String(FixUtils.insertPrintableDelimiter(message));
+    this.fixMessageString = new String(FixUtils.insertPrintableDelimiter(tempBytes));
   }
 
   void parseRawBytes() {
