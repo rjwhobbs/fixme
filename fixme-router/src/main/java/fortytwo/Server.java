@@ -145,7 +145,7 @@ final class Server {
         }
     }
 
-    private void sendToMarket(String message) {
+    private void sendToMarket(byte[] message) {
         try {
             FixMessage fixMessage = FixMsgFactory.createMsg(message);
             System.out.println(fixMessage.getFixMsgString());
@@ -188,8 +188,8 @@ final class Server {
                     int limit = attachment.buffer.limit();
                     byte[] bytes = new byte[limit];
                     attachment.buffer.get(bytes, 0, limit);
-                    String line = new String(FixUtils.insertPrintableDelimiter(bytes));
-                    sendToMarket(line);
+//                    String line = new String(FixUtils.insertPrintableDelimiter(bytes));
+                    sendToMarket(bytes);
                     attachment.buffer.clear();
                     attachment.client.read(attachment.buffer, attachment, this);
                 } else {
@@ -238,35 +238,36 @@ final class Server {
     }
 
     class SendToMarket implements Runnable {
-        private String message;
+        private byte[] message;
         private String senderID;
 
-        SendToMarket(String message, String senderID) {
-            this.message = message.trim();
+        SendToMarket(byte[] message, String senderID) {
+            this.message = message;
             this.senderID = senderID;
         }
 
         @Override
         public void run() {
-            Matcher m = pattern.matcher(message);
-            String marketID;
-            String extractedMessage;
+//            Matcher m = pattern.matcher(message);
+//            String marketID;
+//            String extractedMessage;
 
             try {
-                if (m.find()) {
-                    marketID = m.group(1);
-                    extractedMessage = m.group(2) + "\n";
+//                if (m.find()) {
+//                    marketID = m.group(1);
+//                    extractedMessage = m.group(2) + "\n";
                     //
-                    ClientAttachment clientAttachment = markets.get(marketID);
-                    if (clientAttachment != null && clientAttachment.client != null) {
-                        clientAttachment.client.write(ByteBuffer.wrap(extractedMessage.getBytes())).get();
-                    } else {
-                        printToSender("Market has disconnected.\n");
-                    }
-
+                System.out.println(Arrays.toString(message));
+                ClientAttachment clientAttachment = markets.get("1");
+                if (clientAttachment != null && clientAttachment.client != null) {
+                    clientAttachment.client.write(ByteBuffer.wrap(message)).get();
                 } else {
-                    printToSender("Bad message format. usage: \\<id> <your message>.\n");
+                    printToSender("Market has disconnected.\n");
                 }
+
+//                } else {
+//                    printToSender("Bad message format. usage: \\<id> <your message>.\n");
+//                }
             } catch (InterruptedException | ExecutionException e) {
                 System.err.println(e.getMessage());
             }
@@ -305,7 +306,6 @@ final class Server {
                     } else {
                         printToSender("Broker has disconnected.\n");
                     }
-
                 } else {
                     printToSender("Bad message format. usage: \\<id> <your message>.\n");
                 }
