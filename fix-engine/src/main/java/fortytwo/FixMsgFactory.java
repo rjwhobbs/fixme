@@ -202,7 +202,7 @@ public abstract class FixMsgFactory {
 
 class TestFactory {
   public static void main(String[] args) {
-    // Correct input test on buy msg
+//     Correct input test on buy msg
     try {
       FixMessage test_one = FixMsgFactory.createBuyMsg(
               "1",
@@ -373,6 +373,15 @@ class TestFactory {
     catch (FixFormatException | FixMessageException e) {
       System.out.println("------Usage test two error--------------");
       System.out.println(e.getMessage());
+    }
+
+    try {
+      byte[] testArr = FixUtils.insertSOHDelimiter("49=1|56=2|".getBytes());
+      FixMessage fixMessage = FixMsgFactory.createMsg(testArr);
+    } catch (FixFormatException e) {
+      e.printStackTrace();
+    } catch (FixMessageException e) {
+      e.printStackTrace();
     }
   }
 }
