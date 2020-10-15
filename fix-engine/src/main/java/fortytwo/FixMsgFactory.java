@@ -98,7 +98,7 @@ public abstract class FixMsgFactory {
           String internalTargetID,
           String clientOrdID
   ) throws FixMessageException, FixFormatException {
-    String finalFilledMsg = execReportTemplate(
+    String finalFilledMsg = FixUtils.execReportTemplate(
             FixConstants.ORDER_FILLED,
             internalSenderID,
             internalTargetID,
@@ -121,7 +121,7 @@ public abstract class FixMsgFactory {
           String internalTargetID,
           String clientOrdID
   ) throws FixMessageException, FixFormatException {
-    String finalFilledMsg = execReportTemplate(
+    String finalFilledMsg = FixUtils.execReportTemplate(
             FixConstants.ORDER_REJECTED,
             internalSenderID,
             internalTargetID,
@@ -167,18 +167,6 @@ public abstract class FixMsgFactory {
     }
   }
 
-  private static String execReportTemplate(
-          String execType,
-          String internalSenderID,
-          String internalTargetID,
-          String clientOrdID
-  ) {
-    return FixConstants.internalSenderIDTag + "=" + internalSenderID + FixConstants.printableDelimiter
-            + FixConstants.internalTargetIDTag + "=" + internalTargetID + FixConstants.printableDelimiter
-            + FixConstants.msgTypeTag + "=" + FixConstants.EXEC_REPORT + FixConstants.printableDelimiter
-            + FixConstants.clientOrdIDTag + "=" + clientOrdID + FixConstants.printableDelimiter
-            + FixConstants.execTypeTag + "=" + execType + FixConstants.printableDelimiter;
-  }
 }
 
 class TestFactory {

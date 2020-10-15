@@ -105,6 +105,19 @@ public class FixUtils {
             + FixConstants.clientOrdIDTag + "=" + FixUtils.createUniqueID() + FixConstants.printableDelimiter;
   }
 
+  public static String execReportTemplate(
+          String execType,
+          String internalSenderID,
+          String internalTargetID,
+          String clientOrdID
+  ) {
+    return FixConstants.internalSenderIDTag + "=" + internalSenderID + FixConstants.printableDelimiter
+            + FixConstants.internalTargetIDTag + "=" + internalTargetID + FixConstants.printableDelimiter
+            + FixConstants.msgTypeTag + "=" + FixConstants.EXEC_REPORT + FixConstants.printableDelimiter
+            + FixConstants.clientOrdIDTag + "=" + clientOrdID + FixConstants.printableDelimiter
+            + FixConstants.execTypeTag + "=" + execType + FixConstants.printableDelimiter;
+  }
+
   private static int createCheckSum(byte[] arr) {
     int summedBytes = byteSum(arr);
     return summedBytes % 256;
