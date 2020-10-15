@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-//import fortytwo.FixMessage;
 
 public class Broker {
     private AsynchronousSocketChannel client;
@@ -253,18 +252,13 @@ public class Broker {
 
     public static void main(String[] args) {
         Broker broker = new Broker();
-        // Needs error handling for in case the server isn't running when first connecting.
         try {
             broker.readId();
-            while (true) {
-                broker.readWriteHandler();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            broker.readWriteHandler();
+        } catch (InterruptedException | ExecutionException | IOException e ) {
+            System.out.println(
+                    "There was an error connecting to the server, please ensure that it is online: " + e. getMessage()
+            );
         }
     }
 }
