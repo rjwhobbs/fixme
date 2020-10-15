@@ -158,40 +158,18 @@ public class Broker {
                     }
                     if (line.toLowerCase().equals("y")) {
                         String query = targetId + " " + orderSide;
-                        if (orderSide.equals(FixConstants.BUY_SIDE)) {
-                            try {
-                                fixMessage = FixMsgFactory.createBuyMsg(
-                                        brokerId, targetId, symbol, quantity, price
-                                );
-                                System.out.println("Sent: " + fixMessage.getFixMsgString());
-                                client.write(ByteBuffer.wrap(fixMessage.getRawFixMsgBytes())).get();
-                                i = 0;
-                            }
-                            catch (FixMessageException | FixFormatException e) {
-                                System.out.println("The was an error in your message:");
-                                System.out.println(e.getMessage());
-                                fixMessage = null;
-                                i = 0;
-                            }
+                        try {
+                            fixMessage = FixMsgFactory.createMsg(
+                                    brokerId, targetId, orderSide, symbol, quantity, price
+                            );
+                            System.out.println("Sent: " + fixMessage.getFixMsgString());
+                            client.write(ByteBuffer.wrap(fixMessage.getRawFixMsgBytes())).get();
+                            i = 0;
                         }
-                        else if (orderSide.equals(FixConstants.SELL_SIDE)) {
-                            try {
-                                fixMessage = FixMsgFactory.createBuyMsg(
-                                        brokerId, targetId, symbol, quantity, price
-                                );
-                                System.out.println("Sent: " + fixMessage.getFixMsgString());
-                                client.write(ByteBuffer.wrap(fixMessage.getRawFixMsgBytes())).get();
-                                i = 0;
-                            }
-                            catch (FixMessageException | FixFormatException e) {
-                                System.out.println("The was an error in your message:");
-                                System.out.println(e.getMessage());
-                                fixMessage = null;
-                                i = 0;
-                            }
-                        }
-                        else {
-                            System.out.println("There seems to be a problem with processing your request, please try again.");
+                        catch (FixMessageException | FixFormatException e) {
+                            System.out.println("The was an error in your message:");
+                            System.out.println(e.getMessage());
+                            fixMessage = null;
                             i = 0;
                         }
                     }
