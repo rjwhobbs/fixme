@@ -33,6 +33,37 @@ public abstract class FixMsgFactory {
     return fixMessage;
   }
 
+  public static FixMessage createMsg(
+          String internalSenderID,
+          String internalTargetID,
+          String side,
+          String symbol,
+          String quantity,
+          String price
+  ) throws FixMessageException, FixFormatException {
+    valQuantityInput(quantity);
+    valPriceInput(price);
+    FixMessage fixMessage;
+    String finalBuyMsg = FixUtils.buySellTemplate(
+            side.equals(FixConstants.BUY_SIDE) ? FixConstants.BUY_SIDE : FixConstants.SELL_SIDE,
+            internalSenderID,
+            internalTargetID,
+            symbol,
+            quantity,
+            price
+    );
+
+    fixMessage = new FixMessage(finalBuyMsg);
+
+    fixMessage.checkFixFormat();
+    fixMessage.appendCheckSum();
+    fixMessage.parseRawBytes();
+    fixMessage.parseTagValueLists();
+    fixMessage.validateMsgMap();
+
+    return fixMessage;
+  }
+
   public static FixMessage createBuyMsg(
           String internalSenderID,
           String internalTargetID,
