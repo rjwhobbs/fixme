@@ -145,7 +145,11 @@ public class Broker {
                     break;
                 case 5:
                     String[] userInputs = {brokerId, targetId, orderSide, symbol, quantity, price};
-                    System.out.println("Here is your message: " + Arrays.toString(userInputs) + ".");
+                    System.out.println("Here is your message preview: (Client order ID and checksum will be added once confirmed)"
+                            + FixUtils.fixMsgPreview(
+                                    orderSide, brokerId, targetId, symbol, quantity, price
+                            ) + "."
+                    );
                     System.out.println("Send (y/n) ?: ");
                     if ((line = getNextLine()).toLowerCase().equals("exit")) {
                         runInputReader = false;

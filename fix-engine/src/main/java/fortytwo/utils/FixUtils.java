@@ -87,6 +87,23 @@ public class FixUtils {
     return Integer.toHexString(randNum) + "_" + Long.toString(timeStamp);
   }
 
+  public static String fixMsgPreview(
+          String side,
+          String internalSenderID,
+          String internalTargetID,
+          String symbol,
+          String quantity,
+          String price
+  ) {
+    return FixConstants.internalSenderIDTag + "=" + internalSenderID + FixConstants.printableDelimiter
+            + FixConstants.internalTargetIDTag + "=" + internalTargetID + FixConstants.printableDelimiter
+            + FixConstants.msgTypeTag + "=" + FixConstants.ORDER_SINGLE + FixConstants.printableDelimiter
+            + FixConstants.sideTag + "=" + side + FixConstants.printableDelimiter
+            + FixConstants.symbolTag + "=" + symbol + FixConstants.printableDelimiter
+            + FixConstants.priceTag + "=" + price + FixConstants.printableDelimiter
+            + FixConstants.orderQtyTag + "=" + quantity + FixConstants.printableDelimiter;
+  }
+
   public static String buySellTemplate(
           String side,
           String internalSenderID,
