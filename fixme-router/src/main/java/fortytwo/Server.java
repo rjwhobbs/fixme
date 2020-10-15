@@ -20,10 +20,12 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 final class Server {
+    private static final Logger log = Logger.getLogger("Logger").getParent();
     private static BufferedReader blockerReader;
     private static Pattern pattern;
     private static Executor pool;
@@ -52,7 +54,7 @@ final class Server {
                     public void completed(AsynchronousSocketChannel result, Object attachment) {
                         if (result.isOpen()) {
                             brokerChannel.accept(null, this);
-                            System.out.println("Broker Connected");
+                            log.info("Broker Connected");
                             registerBroker(result);
                         }
                     }
@@ -67,10 +69,9 @@ final class Server {
                             client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                             ClientAttachment clientAttachment = new ClientAttachment(client, brokerID);
                             brokers.put(brokerID, clientAttachment);
-                            System.out.println(brokers.entrySet());
+                            log.info("Connected Brokers " + brokers.entrySet());
                             client.read(clientAttachment.buffer, clientAttachment, new BrokerHandler());
                         } catch (InterruptedException | ExecutionException e) {
-//                            e.printStackTrace();
                             System.err.println("Something went wrong while trying to register a broker");
                         }
                     }
@@ -80,11 +81,11 @@ final class Server {
                         System.err.println("Something went wrong while connecting Broker to Router: " + exc.getMessage());
                     }
                 });
-                System.out.println("Listening on port 5000");
+                log.info("Listening on port 5000");
                 blocker();
             }
         } catch (Exception e) {
-            System.out.println("Router Error in acceptBroker(): " + e.getMessage());
+            System.err.println("Router Error in acceptBroker(): " + e.getMessage());
 
         }
     }
@@ -114,8 +115,7 @@ final class Server {
                             client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                             ClientAttachment clientAttachment = new ClientAttachment(client, marketID);
                             markets.put(marketID, clientAttachment);
-                            //Debug
-                            System.out.println(brokers.entrySet());
+                            log.info("Connected Markets" + brokers.entrySet());
                             client.read(clientAttachment.buffer, clientAttachment, new MarketHandler());
                         } catch (InterruptedException | ExecutionException e) {
                              System.err.println("Something went wrong while trying to register a market");
@@ -124,14 +124,14 @@ final class Server {
 
                     @Override
                     public void failed(Throwable exc, Object attachment) {
-                        System.out.println("Something went wrong while connecting Market to Router");
+                        System.err.println("Something went wrong while connecting Market to Router");
                     }
                 });
-                System.out.println("Listening on port 5001");
+                log.info("Listening on port 5001");
                 blocker();
             }
         } catch (Exception e) {
-            System.out.println("Router Error in acceptMarket(): " + e.getMessage());
+            System.err.println("Router Error in acceptMarket(): " + e.getMessage());
         }
     }
 
@@ -148,7 +148,8 @@ final class Server {
     private void sendToMarket(byte[] message) {
         try {
             FixMessage fixMessage = FixMsgFactory.createMsg(message);
-            System.out.println(fixMessage.getFixMsgString());
+            //Debug
+            log.info(fixMessage.getFixMsgString());
             FixUtils.valCheckSum(fixMessage.getFixMsgString());
             String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
             pool.execute(new SendToMarket(message, senderID));
@@ -257,7 +258,8 @@ final class Server {
 //                    marketID = m.group(1);
 //                    extractedMessage = m.group(2) + "\n";
                     //
-                System.out.println(Arrays.toString(message));
+                //Debug
+                log.info(Arrays.toString(message));
                 ClientAttachment clientAttachment = markets.get("1");
                 if (clientAttachment != null && clientAttachment.client != null) {
                     clientAttachment.client.write(ByteBuffer.wrap(message)).get();
