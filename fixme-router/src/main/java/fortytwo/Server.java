@@ -1,5 +1,11 @@
 package fortytwo;
 
+import fortytwo.constants.FixConstants;
+import fortytwo.fixexceptions.FixCheckSumException;
+import fortytwo.fixexceptions.FixFormatException;
+import fortytwo.fixexceptions.FixMessageException;
+import fortytwo.utils.FixUtils;
+
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -138,16 +145,38 @@ final class Server {
         }
     }
 
-    private void sendToMarket(String message, String senderID) {
-        // Raw bytes
-        // fm = FF.createMsg(msg)
-        // FixUtil.valCh(fm.getString())
-        // sendID = fm.msgMap.get(FC.internalsenderTag)
-        pool.execute(new SendToMarket(message, senderID));
+    private void sendToMarket(String message) {
+        try {
+            FixMessage fixMessage = FixMsgFactory.createMsg(message);
+            System.out.println(fixMessage.getFixMsgString());
+            FixUtils.valCheckSum(fixMessage.getFixMsgString());
+            String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
+            pool.execute(new SendToMarket(message, senderID));
+        } catch (FixCheckSumException e) {
+            //TODO display on the client
+            System.err.println("Failed checksum " + e.getMessage());
+        } catch (FixFormatException e) {
+            System.err.println("Fix format exception " + e.getMessage());
+        } catch (FixMessageException e) {
+            System.err.println("Failed to create Fixed message " + e.getMessage());
+        }
     }
 
-    private void sendToBroker(String message, String senderID) {
-        pool.execute(new SendToBroker(message, senderID));
+    private void sendToBroker(String message) {
+
+        try {
+            FixMessage fixMessage = FixMsgFactory.createMsg(message);
+            System.out.println(fixMessage.getFixMsgString());
+            FixUtils.valCheckSum(fixMessage.getFixMsgString());
+            String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
+            pool.execute(new SendToBroker(message, senderID));
+        } catch (FixCheckSumException e) {
+            System.err.println("Failed checksum " + e.getMessage());
+        } catch (FixFormatException e) {
+            System.err.println("Fix format exception " + e.getMessage());
+        } catch (FixMessageException e) {
+            System.err.println("Failed to create Fixed message " + e.getMessage());
+        }
     }
 
     class BrokerHandler implements CompletionHandler<Integer, ClientAttachment> {
@@ -159,10 +188,8 @@ final class Server {
                     int limit = attachment.buffer.limit();
                     byte[] bytes = new byte[limit];
                     attachment.buffer.get(bytes, 0, limit);
-                    String line = new String(bytes);
-                    //Debug
-                    System.out.println(line);
-                    sendToMarket(line, attachment.id);
+                    String line = new String(FixUtils.insertPrintableDelimiter(bytes));
+                    sendToMarket(line);
                     attachment.buffer.clear();
                     attachment.client.read(attachment.buffer, attachment, this);
                 } else {
@@ -191,10 +218,8 @@ final class Server {
                     int limit = attachment.buffer.limit();
                     byte[] bytes = new byte[limit];
                     attachment.buffer.get(bytes, 0, limit);
-                    String line = new String(bytes);
-                    //Debug
-                    System.out.println(line);
-                    sendToBroker(line, attachment.id);
+                    String line = new String(FixUtils.insertPrintableDelimiter(bytes));
+                    sendToBroker(line);
                     attachment.buffer.clear();
                     attachment.client.read(attachment.buffer, attachment, this);
                 } else {
@@ -231,6 +256,7 @@ final class Server {
                 if (m.find()) {
                     marketID = m.group(1);
                     extractedMessage = m.group(2) + "\n";
+                    //
                     ClientAttachment clientAttachment = markets.get(marketID);
                     if (clientAttachment != null && clientAttachment.client != null) {
                         clientAttachment.client.write(ByteBuffer.wrap(extractedMessage.getBytes())).get();
