@@ -148,11 +148,11 @@ final class Server {
     private void sendToMarket(byte[] message) {
         try {
             FixMessage fixMessage = FixMsgFactory.createMsg(message);
-            //Debug
             log.info(fixMessage.getFixMsgString());
             FixUtils.valCheckSum(fixMessage.getFixMsgString());
             String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
-            pool.execute(new SendToMarket(message, senderID));
+            String targetID = fixMessage.msgMap.get(FixConstants.internalTargetIDTag);
+            pool.execute(new SendToMarket(message, senderID, targetID));
         } catch (FixCheckSumException e) {
             //TODO display on the client
             System.err.println("Failed checksum " + e.getMessage());
@@ -240,18 +240,18 @@ final class Server {
     class SendToMarket implements Runnable {
         private byte[] message;
         private String senderID;
+        private String targetID;
 
-        SendToMarket(byte[] message, String senderID) {
+        SendToMarket(byte[] message, String senderID, String targetID) {
             this.message = message;
             this.senderID = senderID;
+            this.targetID = targetID;
         }
 
         @Override
         public void run() {
             try {
-                String marketID = FixMsgFactory.createMsg(message).msgMap.get(FixConstants.internalTargetIDTag);
-                log.info(Arrays.toString(message));
-                ClientAttachment clientAttachment = markets.get(marketID);
+                ClientAttachment clientAttachment = markets.get(targetID);
                 if (clientAttachment != null && clientAttachment.client != null) {
                     clientAttachment.client.write(ByteBuffer.wrap(message)).get();
                 } else {
@@ -259,8 +259,6 @@ final class Server {
                 }
             } catch (InterruptedException | ExecutionException e) {
                 System.err.println(e.getMessage());
-            } catch (FixFormatException | FixMessageException e) {
-                e.printStackTrace();
             }
         }
 
