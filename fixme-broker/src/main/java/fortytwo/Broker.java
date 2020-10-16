@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -181,14 +182,43 @@ public class Broker {
                 int limit = attachment.buffer.limit();
                 byte[] bytes = new byte[limit];
                 attachment.buffer.get(bytes, 0, limit);
-                String line = new String(bytes);
-                System.out.print(line);
+                printMessage(bytes);
                 attachment.buffer.clear();
                 client.read(attachment.buffer, attachment, this);
             } else {
                 runInputReader = false;
                 System.out.println("Server has disconnected, please hit enter to close the broker.");
                 stop();
+            }
+        }
+
+        private void printMessage(byte[] message) {
+            byte[] tempBytes = Arrays.copyOf(message, message.length);
+            String rawMessage = new String(FixUtils.insertPrintableDelimiter(tempBytes));
+            String marketID = "";
+            String clientOrderID = "";
+            String rejectReason = "";
+
+            System.out.println("Raw message from server: " + rawMessage);
+
+            try {
+                FixMessage fixMessage = FixMsgFactory.createMsg(message);
+                marketID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
+                clientOrderID = fixMessage.msgMap.get(FixConstants.clientOrdIDTag);
+                if (fixMessage.msgMap.get(FixConstants.execTypeTag).equals(FixConstants.ORDER_FILLED)) {
+                    System.out.println("Order #" + clientOrderID + " from market #" + marketID + " has been filled.");
+                }
+                else if (fixMessage.msgMap.get(FixConstants.execTypeTag).equals(FixConstants.ORDER_REJECTED)) {
+                    System.out.println("Order #" + clientOrderID + " from market #" + marketID + " has been rejected.");
+                    rejectReason = fixMessage.msgMap.get(FixConstants.textTag);
+                    if (rejectReason != null) {
+                        System.out.println("Reject reason: " + rejectReason);
+                    }
+                }
+            } catch (FixFormatException e) {
+                System.out.println("Error creating fix message from server: " + e.getMessage());
+            } catch (FixMessageException e) {
+                System.out.println("Error creating fix message from server: " + e.getMessage());
             }
         }
 
