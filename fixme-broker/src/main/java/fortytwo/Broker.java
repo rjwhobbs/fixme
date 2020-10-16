@@ -241,7 +241,8 @@ public class Broker {
             broker.readWriteHandler();
         } catch (InterruptedException | ExecutionException | IOException e ) {
             System.out.println(
-                    "There was an error connecting to the server, please ensure that it is online: " + e. getMessage()
+                    "There was an error connecting to the server, please ensure that it is online: "
+                            + e. getMessage()
             );
         }
     }
