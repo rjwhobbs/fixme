@@ -22,8 +22,6 @@ public class Broker {
     private AsynchronousSocketChannel client;
     private Future<Void> future;
     private static BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-    private static BufferedReader blockerReader = new BufferedReader(new InputStreamReader(System.in));
-    private static Pattern senderPattern = Pattern.compile("^market#(\\d+)");
     private static Pattern idPattern = Pattern.compile(
             "^Yello, you are now connected to the router, your ID is (\\d+)"
     );
@@ -198,7 +196,7 @@ public class Broker {
 
         @Override
         public void failed(Throwable exc, ReadAttachment attachment) {
-
+            System.out.println("There was an error reading from the server.");
         }
     }
 
