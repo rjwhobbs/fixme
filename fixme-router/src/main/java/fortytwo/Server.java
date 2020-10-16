@@ -65,7 +65,6 @@ final class Server {
                             String brokerID = Integer.toString(brokersIndex++);
                             String welcomeMessage =
                                     "Yello, you are now connected to the router, your ID is " + brokerID + "\n";
-
                             client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                             ClientAttachment clientAttachment = new ClientAttachment(client, brokerID);
                             brokers.put(brokerID, clientAttachment);
@@ -111,7 +110,6 @@ final class Server {
                             String marketID = Integer.toString(marketsIndex++);
                             String welcomeMessage =
                                     "Yello, you are now connected to the router, your ID is " + marketID + "\n";
-
                             client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                             ClientAttachment clientAttachment = new ClientAttachment(client, marketID);
                             markets.put(marketID, clientAttachment);
@@ -148,11 +146,11 @@ final class Server {
     private void sendToMarket(byte[] message) {
         try {
             FixMessage fixMessage = FixMsgFactory.createMsg(message);
-            //Debug
             log.info(fixMessage.getFixMsgString());
             FixUtils.valCheckSum(fixMessage.getFixMsgString());
             String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
-            pool.execute(new SendToMarket(message, senderID));
+            String targetID = fixMessage.msgMap.get(FixConstants.internalTargetIDTag);
+            pool.execute(new SendToMarket(message, senderID, targetID));
         } catch (FixCheckSumException e) {
             //TODO display on the client
             System.err.println("Failed checksum " + e.getMessage());
@@ -163,14 +161,14 @@ final class Server {
         }
     }
 
-    private void sendToBroker(String message) {
-
+    private void sendToBroker(byte[] message) {
         try {
             FixMessage fixMessage = FixMsgFactory.createMsg(message);
             System.out.println(fixMessage.getFixMsgString());
             FixUtils.valCheckSum(fixMessage.getFixMsgString());
             String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
-            pool.execute(new SendToBroker(message, senderID));
+            String targetID = fixMessage.msgMap.get(FixConstants.internalTargetIDTag);
+            pool.execute(new SendToBroker(message, senderID, targetID));
         } catch (FixCheckSumException e) {
             System.err.println("Failed checksum " + e.getMessage());
         } catch (FixFormatException e) {
@@ -218,8 +216,7 @@ final class Server {
                     int limit = attachment.buffer.limit();
                     byte[] bytes = new byte[limit];
                     attachment.buffer.get(bytes, 0, limit);
-                    String line = new String(FixUtils.insertPrintableDelimiter(bytes));
-                    sendToBroker(line);
+                    sendToBroker(bytes);
                     attachment.buffer.clear();
                     attachment.client.read(attachment.buffer, attachment, this);
                 } else {
@@ -240,18 +237,18 @@ final class Server {
     class SendToMarket implements Runnable {
         private byte[] message;
         private String senderID;
+        private String targetID;
 
-        SendToMarket(byte[] message, String senderID) {
+        SendToMarket(byte[] message, String senderID, String targetID) {
             this.message = message;
             this.senderID = senderID;
+            this.targetID = targetID;
         }
 
         @Override
         public void run() {
             try {
-                String marketID = FixMsgFactory.createMsg(message).msgMap.get(FixConstants.internalTargetIDTag);
-                log.info(Arrays.toString(message));
-                ClientAttachment clientAttachment = markets.get(marketID);
+                ClientAttachment clientAttachment = markets.get(targetID);
                 if (clientAttachment != null && clientAttachment.client != null) {
                     clientAttachment.client.write(ByteBuffer.wrap(message)).get();
                 } else {
@@ -259,8 +256,6 @@ final class Server {
                 }
             } catch (InterruptedException | ExecutionException e) {
                 System.err.println(e.getMessage());
-            } catch (FixFormatException | FixMessageException e) {
-                e.printStackTrace();
             }
         }
 
@@ -273,32 +268,24 @@ final class Server {
     }
 
     class SendToBroker implements Runnable {
-        private String message;
+        private byte[] message;
         private String senderID;
+        private String targetID;
 
-        public SendToBroker(String message, String senderID) {
+        public SendToBroker(byte[] message, String senderID, String targetID) {
             this.message = message;
             this.senderID = senderID;
+            this.targetID = targetID;
         }
 
         @Override
         public void run() {
-            Matcher m = pattern.matcher(message);
-            String brokerID;
-            String extractedMessage;
-
             try {
-                if (m.find()) {
-                    brokerID = m.group(1);
-                    extractedMessage = m.group(2) + "\n";
-                    ClientAttachment clientAttachment = brokers.get(brokerID);
-                    if (clientAttachment != null && clientAttachment.client != null) {
-                        clientAttachment.client.write(ByteBuffer.wrap(extractedMessage.getBytes())).get();
-                    } else {
-                        printToSender("Broker has disconnected.\n");
-                    }
+                ClientAttachment clientAttachment = brokers.get(targetID);
+                if (clientAttachment != null && clientAttachment.client != null) {
+                    clientAttachment.client.write(ByteBuffer.wrap(message)).get();
                 } else {
-                    printToSender("Bad message format. usage: \\<id> <your message>.\n");
+                    printToSender("Broker has disconnected.\n");
                 }
             } catch (InterruptedException | ExecutionException e) {
                 System.err.println(e.getMessage());
