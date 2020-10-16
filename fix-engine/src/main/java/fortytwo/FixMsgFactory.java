@@ -170,6 +170,35 @@ public abstract class FixMsgFactory {
     return fixMessage;
   }
 
+  public static FixMessage createExecRejectedMsg(
+          String internalSenderID,
+          String internalTargetID,
+          String clientOrdID,
+          String rejectReason
+  ) throws FixMessageException, FixFormatException {
+    String finalFilledMsg = FixUtils.execReportTemplate(
+            FixConstants.ORDER_REJECTED,
+            internalSenderID,
+            internalTargetID,
+            clientOrdID
+    );
+
+    finalFilledMsg =
+            finalFilledMsg
+                    + FixConstants.textTag + "=" +rejectReason
+                    + FixConstants.printableDelimiter;
+
+    FixMessage fixMessage = new FixMessage(finalFilledMsg);
+
+    fixMessage.checkFixFormat();
+    fixMessage.appendCheckSum();
+    fixMessage.parseRawBytes();
+    fixMessage.parseTagValueLists();
+    fixMessage.validateMsgMap();
+
+    return fixMessage;
+  }
+
   private static void valPriceInput(String input) throws FixFormatException {
     try {
       double testInput = Double.parseDouble(input);
@@ -375,6 +404,7 @@ class TestFactory {
       System.out.println(e.getMessage());
     }
 
+    // Test byte overload factory method
     try {
       byte[] testArr = FixUtils.insertSOHDelimiter("49=1|56=2|".getBytes());
       FixMessage fixMessage = FixMsgFactory.createMsg(testArr);
@@ -382,6 +412,23 @@ class TestFactory {
       e.printStackTrace();
     } catch (FixMessageException e) {
       e.printStackTrace();
+    }
+
+    // Testing exec report rejected with reject reason
+    try {
+      FixMessage test_eight = FixMsgFactory.createExecRejectedMsg(
+              "1",
+              "2",
+              "qe3_123",
+              "Just Testing"
+      );
+      System.out.println("__________Test Eight______________");
+      System.out.println(test_eight.getFixMsgString());
+      System.out.println("________________________________");
+    }
+    catch (FixFormatException | FixMessageException e) {
+      System.out.println("Test Eight error: " + e);
+      System.out.println("________________________________");
     }
   }
 }

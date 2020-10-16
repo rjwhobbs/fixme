@@ -17,6 +17,7 @@ public class FixConstants {
   public final static String execTypeTag          = "150";
   public final static String internalSenderIDTag  = "49";
   public final static String internalTargetIDTag  = "56";
+  public final static String textTag              = "58";
 
   // values
   public final static String ORDER_SINGLE         = "D";

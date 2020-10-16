@@ -22,8 +22,6 @@ public class Broker {
     private AsynchronousSocketChannel client;
     private Future<Void> future;
     private static BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-    private static BufferedReader blockerReader = new BufferedReader(new InputStreamReader(System.in));
-    private static Pattern senderPattern = Pattern.compile("^market#(\\d+)");
     private static Pattern idPattern = Pattern.compile(
             "^Yello, you are now connected to the router, your ID is (\\d+)"
     );
@@ -38,15 +36,13 @@ public class Broker {
         future.get();
     }
 
-    void readId() throws ExecutionException, InterruptedException, IOException {
+    void readId() throws ExecutionException, InterruptedException {
         String msgFromRouter;
         ByteBuffer buffer = ByteBuffer.allocate(64);
         int bytesRead = client.read(buffer).get();
         if (bytesRead == -1) {
-            System.out.println("Server has disconnected.");
-            // Do other things
-            this.client.close();
-            System.exit(0);
+            System.out.println("Server has disconnected, exiting broker.");
+            stop();
         }
         buffer.flip();
         msgFromRouter = new String(buffer.array());
@@ -198,7 +194,7 @@ public class Broker {
 
         @Override
         public void failed(Throwable exc, ReadAttachment attachment) {
-
+            System.out.println("There was an error reading from the server.");
         }
     }
 
@@ -245,7 +241,8 @@ public class Broker {
             broker.readWriteHandler();
         } catch (InterruptedException | ExecutionException | IOException e ) {
             System.out.println(
-                    "There was an error connecting to the server, please ensure that it is online: " + e. getMessage()
+                    "There was an error connecting to the server, please ensure that it is online: "
+                            + e. getMessage()
             );
         }
     }
