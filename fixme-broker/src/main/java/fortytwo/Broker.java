@@ -36,15 +36,13 @@ public class Broker {
         future.get();
     }
 
-    void readId() throws ExecutionException, InterruptedException, IOException {
+    void readId() throws ExecutionException, InterruptedException {
         String msgFromRouter;
         ByteBuffer buffer = ByteBuffer.allocate(64);
         int bytesRead = client.read(buffer).get();
         if (bytesRead == -1) {
-            System.out.println("Server has disconnected.");
-            // Do other things
-            this.client.close();
-            System.exit(0);
+            System.out.println("Server has disconnected, exiting broker.");
+            stop();
         }
         buffer.flip();
         msgFromRouter = new String(buffer.array());
