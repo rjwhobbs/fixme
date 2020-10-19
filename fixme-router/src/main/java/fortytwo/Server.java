@@ -105,7 +105,7 @@ final class Server {
                     public void completed(AsynchronousSocketChannel result, Object attachment) {
                         if (result.isOpen()) {
                             marketChannel.accept(null, this);
-                            System.out.println("Market Connected");
+                            log.info("Market Connected");
                             registerMarket(result);
                         }
                     }
