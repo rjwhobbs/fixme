@@ -70,8 +70,9 @@ public class Market {
 
     void readHandler() throws ExecutionException, InterruptedException, IOException {
         String msgFromRouter;
-        String senderId = "";
-        String response = "";
+        String senderId;
+        String response;
+        String clientOrdId;
         int limit;
         byte[] bytes;
         ByteBuffer buffer = ByteBuffer.allocate(512);
@@ -94,7 +95,11 @@ public class Market {
             FixMessage fixMsg = FixMsgFactory.createMsg(bytes);
             System.out.println("This was the raw message from the router: " + fixMsg.getFixMsgString());
             senderId = fixMsg.msgMap.get(FixConstants.internalSenderIDTag);
-//            FixMessage fixMsgResponse =
+            clientOrdId = fixMsg.msgMap.get(FixConstants.clientOrdIDTag);
+            FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
+                    this.marketId, senderId, clientOrdId, "This is just a test"
+            );
+            client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
         }
         catch (FixFormatException | FixMessageException e) {
             System.out.println("There was an error building the FIX message: " + e.getMessage());
