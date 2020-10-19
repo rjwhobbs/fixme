@@ -162,7 +162,6 @@ final class Server {
             String targetID = fixMessage.msgMap.get(FixConstants.internalTargetIDTag);
             pool.execute(new SendToMarket(message, senderID, targetID));
         } catch (FixCheckSumException e) {
-            //TODO display on the client
             System.err.println("Failed checksum " + e.getMessage());
         } catch (FixFormatException e) {
             System.err.println("Fix format exception " + e.getMessage());
