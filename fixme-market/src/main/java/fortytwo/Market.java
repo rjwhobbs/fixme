@@ -1,5 +1,8 @@
 package fortytwo;
 
+import fortytwo.constants.FixConstants;
+import fortytwo.fixexceptions.FixFormatException;
+import fortytwo.fixexceptions.FixMessageException;
 import fortytwo.utils.FixUtils;
 
 import java.io.BufferedReader;
@@ -87,8 +90,18 @@ public class Market {
         buffer.get(bytes, 0, limit);
         buffer.clear();
 
-        msgFromRouter = new String(FixUtils.insertPrintableDelimiter(bytes));
-        System.out.println("Message from router: " + msgFromRouter);
+        try {
+            FixMessage fixMsg = FixMsgFactory.createMsg(bytes);
+            System.out.println("This was the raw message from the router: " + fixMsg.getFixMsgString());
+            senderId = fixMsg.msgMap.get(FixConstants.internalSenderIDTag);
+//            FixMessage fixMsgResponse =
+        }
+        catch (FixFormatException | FixMessageException e) {
+            System.out.println("There was an error building the FIX message: " + e.getMessage());
+        }
+
+//        msgFromRouter = new String(FixUtils.insertPrintableDelimiter(bytes));
+//        System.out.println("Message from router: " + msgFromRouter);
 //        Matcher m = senderPattern.matcher(msgFromRouter);
 //        if (m.find()) {
 //            senderId = m.group(1);
