@@ -131,17 +131,17 @@ public class Broker {
                     ++i;
                     break;
                 case 5:
-                    System.out.println("Here is your message preview: (Client order ID and checksum will be added once confirmed)\n"
-                            + FixUtils.fixMsgPreview(
-                                    orderSide, brokerId, targetId, symbol, quantity, price
-                            ) + "."
+                    System.out.println(
+                            "Here is your message preview: "
+                            + FixUtils.fixMsgPreview(orderSide, brokerId, targetId, symbol, quantity, price)
+                            + "\nN.B Client order ID and checksum will be added once confirmed"
                     );
-                    System.out.println("Send (y/n) ?: ");
-                    if ((line = getNextLine()).toLowerCase().equals("exit")) {
+                    System.out.println("Do you wish to continue with your transaction? (Y)es or (N)o");
+                    if ((line = getNextLine()).toLowerCase().trim().equals("exit")) {
                         runInputReader = false;
                         break ;
                     }
-                    if (line.toLowerCase().equals("y")) {
+                    if (line.toLowerCase().trim().equals("y") || line.toLowerCase().trim().equals("yes")) {
                         try {
                             fixMessage = FixMsgFactory.createMsg(
                                     brokerId, targetId, orderSide, symbol, quantity, price
@@ -160,7 +160,7 @@ public class Broker {
                             i = 0;
                         }
                     }
-                    else if (line.toLowerCase().equals("n")) {
+                    else if (line.toLowerCase().trim().equals("n") || line.toLowerCase().trim().equals("no")) {
                         System.out.println("Message not sent");
                         i = 0;
                     }
