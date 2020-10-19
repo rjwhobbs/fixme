@@ -87,10 +87,45 @@ public class Market {
             System.out.println("This was the raw message from the router: " + fixMsg.getFixMsgString());
             senderId = fixMsg.msgMap.get(FixConstants.internalSenderIDTag);
             clientOrdId = fixMsg.msgMap.get(FixConstants.clientOrdIDTag);
-            FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
-                    this.marketId, senderId, clientOrdId, "This is just a test"
-            );
-            client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+            int resCode = 0;
+            if (fixMsg.msgMap.get(FixConstants.sideTag).equals(FixConstants.BUY_SIDE)) {
+              resCode = MarketOps(
+                        this.Stock,
+                        fixMsg.msgMap.get(FixConstants.symbolTag),
+                        Integer.parseInt(fixMsg.msgMap.get(FixConstants.orderQtyTag)),
+                        "buy");
+
+              if (resCode == 420) {
+                FixMessage fixMsgResponse = FixMsgFactory.createExecFilledMsg(
+                    this.marketId, senderId, clientOrdId
+                );
+                client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+                // System.out.println(this.Stock.get(fixMsg.msgMap.get(FixConstants.symbolTag)));
+                return ;
+              }
+              else
+                rejectHandler(resCode, senderId, clientOrdId);
+            }
+            else if (fixMsg.msgMap.get(FixConstants.sideTag).equals(FixConstants.SELL_SIDE)) {
+              resCode = MarketOps(
+                        this.Stock,
+                        fixMsg.msgMap.get(FixConstants.symbolTag),
+                        Integer.parseInt(fixMsg.msgMap.get(FixConstants.orderQtyTag)),
+                        "sell");
+              if (resCode == 420) {
+                FixMessage fixMsgResponse = FixMsgFactory.createExecFilledMsg(
+                    this.marketId, senderId, clientOrdId
+                );
+                client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+                return ;
+              }
+              else
+                rejectHandler(resCode, senderId, clientOrdId);
+            }
+            // FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
+            //         this.marketId, senderId, clientOrdId, "This is just a test"
+            // );
+            // client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
         }
         catch (FixFormatException | FixMessageException e) {
             System.out.println("There was an error building the FIX message: " + e.getMessage());
@@ -106,24 +141,55 @@ public class Market {
 //        }
     }
 
-    boolean MarketOps(HashMap<String, Integer> stock, String instrument, int amount, String op) {
+    int MarketOps(HashMap<String, Integer> stock, String instrument, int amount, String op) {
         if (stock.containsKey(instrument)) {
-            if (op.toLowerCase() == "buy") {
-                if (stock.get(instrument) < amount)
-                    return false;
-                else {
-                    stock.put(instrument, (stock.get(instrument) - amount));
-                    this.Stock = stock;
-                    return true;
+          if (op.toLowerCase() == "buy") {
+              if (stock.get(instrument) < amount)
+                return 504;
+              else {
+                  stock.put(instrument, (stock.get(instrument) - amount));
+                  this.Stock = stock;
+                  return 420;
                 }
             }
             else if (op.toLowerCase() == "sell") {
-                stock.put(instrument, (stock.get(instrument) + amount));
-                this.Stock = stock;
-                return true;
+              stock.put(instrument, (stock.get(instrument) + amount));
+              this.Stock = stock;
+              return 420;
             }
         }
-        return false;
+        else
+          return 404;
+      return -1;
+    }
+
+    void rejectHandler(int resCode, String senderId, String clientOrdId)
+        throws ExecutionException, InterruptedException, IOException {
+      try {
+        if (resCode == 404) {
+          FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
+            this.marketId, senderId, clientOrdId, "Instrument not stocked at " + this.marketId
+          );
+          client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+          return ;
+        }
+        else if (resCode == 504) {
+          FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
+            this.marketId, senderId, clientOrdId, "Instrument stock insufficient at " + this.marketId
+          );
+          client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+          return ;
+        }
+        else if (resCode == -1) {
+          FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
+            this.marketId, senderId, clientOrdId, "Aw hell, I dunno."
+          );
+          client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+          return ;
+        }
+      } catch (FixFormatException | FixMessageException e) {
+        System.out.println("There was an error building the FIX message: " + e.getMessage());
+      }
     }
 
     public static void main(String[] args) {
