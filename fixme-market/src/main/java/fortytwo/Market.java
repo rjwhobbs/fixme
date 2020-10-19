@@ -1,5 +1,7 @@
 package fortytwo;
 
+import fortytwo.utils.FixUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -19,7 +21,9 @@ public class Market {
 //  private Boolean clientOpenState;
     private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
     private static Pattern senderPattern = Pattern.compile("^broker#(\\d+)");
-    private static Pattern idPattern = Pattern.compile("^Welcome to whisper chat, your ID is (\\d+)$");
+    private static Pattern idPattern = Pattern.compile(
+            "^Yello, you are now connected to the router, your ID is (\\d+)"
+    );
     private static String marketId;
     private HashMap<String, Integer> Stock;
 
@@ -65,23 +69,32 @@ public class Market {
         String msgFromRouter;
         String senderId = "";
         String response = "";
-        ByteBuffer buffer = ByteBuffer.allocate(4096);
+        int limit;
+        byte[] bytes;
+        ByteBuffer buffer = ByteBuffer.allocate(512);
         int bytesRead = client.read(buffer).get();
+
         if (bytesRead == -1) {
             System.out.println("Server has disconnected.");
             // Do other things
             this.client.close();
             System.exit(0);
         }
+
         buffer.flip();
-        msgFromRouter = new String(buffer.array());
-        System.out.println(msgFromRouter);
-        Matcher m = senderPattern.matcher(msgFromRouter);
-        if (m.find()) {
-            senderId = m.group(1);
-            response = "\\" + senderId + " acknowledged\n";
-            client.write(ByteBuffer.wrap(response.getBytes())).get();
-        }
+        limit = buffer.limit();
+        bytes = new byte[limit];
+        buffer.get(bytes, 0, limit);
+        buffer.clear();
+
+        msgFromRouter = new String(FixUtils.insertPrintableDelimiter(bytes));
+        System.out.println("Message from router: " + msgFromRouter);
+//        Matcher m = senderPattern.matcher(msgFromRouter);
+//        if (m.find()) {
+//            senderId = m.group(1);
+//            response = "\\" + senderId + " acknowledged\n";
+//            client.write(ByteBuffer.wrap(response.getBytes())).get();
+//        }
     }
 
     boolean MarketOps(HashMap<String, Integer> stock, String instrument, int amount, String op) {
