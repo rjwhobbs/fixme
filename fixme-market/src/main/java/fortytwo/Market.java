@@ -20,10 +20,6 @@ import java.util.regex.Pattern;
 public class Market {
     private AsynchronousSocketChannel client;
     private Future<Void> future;
-    //  private static AsyncChatClient instance;
-//  private Boolean clientOpenState;
-    private BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-    private static Pattern senderPattern = Pattern.compile("^broker#(\\d+)");
     private static Pattern idPattern = Pattern.compile(
             "^Yello, you are now connected to the router, your ID is (\\d+)"
     );
@@ -31,26 +27,21 @@ public class Market {
     private HashMap<String, Integer> Stock;
 
     Market() {
-        try {
-            client = AsynchronousSocketChannel.open();
-            InetSocketAddress hostAddress = new InetSocketAddress("localhost", 5001);
-            future = client.connect(hostAddress);
-            future.get();
-            Stock = new HashMap<String, Integer>();
-            Stock.put("Guitars", 42);
-            Stock.put("Keyboards", 42);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        Stock = new HashMap<String, Integer>();
+        Stock.put("Guitars", 42);
+        Stock.put("Keyboards", 42);
+    }
+
+    void start() throws IOException, ExecutionException, InterruptedException {
+        client = AsynchronousSocketChannel.open();
+        InetSocketAddress hostAddress = new InetSocketAddress("localhost", 5001);
+        future = client.connect(hostAddress);
+        future.get();
     }
 
     void readId() throws ExecutionException, InterruptedException, IOException {
         String msgFromRouter;
-        ByteBuffer buffer = ByteBuffer.allocate(64);
+        ByteBuffer buffer = ByteBuffer.allocate(128);
         int bytesRead = client.read(buffer).get();
         if (bytesRead == -1) {
             System.out.println("Server has disconnected.");
@@ -137,16 +128,17 @@ public class Market {
 
     public static void main(String[] args) {
         Market market = new Market();
-        // readId
+     
         try {
+            market.start();
             market.readId();
             while (true) {
                 market.readHandler();
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            System.out.println("Something went wrong communicating with the server: " + e.getMessage());
         } catch (ExecutionException | IOException e) {
-            e.printStackTrace();
+            System.out.println("Unable to establish connection with router: " + e.getMessage());
         }
     }
 }
