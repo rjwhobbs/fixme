@@ -146,7 +146,7 @@ public class Market {
     }
 
     void rejectHandler(int resCode, String senderId, String clientOrdId)
-        throws ExecutionException, InterruptedException, IOException {
+        throws ExecutionException, InterruptedException {
       try {
         if (resCode == 404) {
           FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
