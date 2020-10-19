@@ -168,14 +168,14 @@ public class Market {
       try {
         if (resCode == 404) {
           FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
-            this.marketId, senderId, clientOrdId, "Instrument not stocked at " + this.marketId
+            this.marketId, senderId, clientOrdId, "Instrument not stocked at market# " + this.marketId
           );
           client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
           return ;
         }
         else if (resCode == 504) {
           FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
-            this.marketId, senderId, clientOrdId, "Instrument stock insufficient at " + this.marketId
+            this.marketId, senderId, clientOrdId, "Instrument stock insufficient at market#" + this.marketId
           );
           client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
           return ;
