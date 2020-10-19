@@ -6,7 +6,6 @@ import fortytwo.fixexceptions.FixFormatException;
 import fortytwo.fixexceptions.FixMessageException;
 import fortytwo.utils.FixUtils;
 
-import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,20 +14,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 final class Server {
     private static final Logger log = Logger.getLogger("Logger").getParent();
     private final int MAX_CLIENTS = 999999;
     private static BufferedReader blockerReader;
-    private static Pattern pattern;
     private static Executor pool;
     private static int brokersIndex;
     private static int marketsIndex;
@@ -37,7 +32,6 @@ final class Server {
 
     public Server() {
         blockerReader = new BufferedReader(new InputStreamReader(System.in));
-        pattern = Pattern.compile("^\\\\(\\d+)\\s+(.+)");
         pool = Executors.newFixedThreadPool(200);
         brokers = new HashMap<>();
         markets = new HashMap<>();
