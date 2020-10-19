@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 
 final class Server {
     private static final Logger log = Logger.getLogger("Logger").getParent();
+    private final int MAX_CLIENTS = 999999;
     private static BufferedReader blockerReader;
     private static Pattern pattern;
     private static Executor pool;
@@ -40,8 +41,8 @@ final class Server {
         pool = Executors.newFixedThreadPool(200);
         brokers = new HashMap<>();
         markets = new HashMap<>();
-        brokersIndex = 1;
-        marketsIndex = 1;
+        brokersIndex = 100000;
+        marketsIndex = 100000;
     }
 
     public void acceptBroker() {
@@ -61,15 +62,19 @@ final class Server {
 
                     private void registerBroker(AsynchronousSocketChannel client)  {
                         try {
-                            //TODO generate unique six digit ID
-                            String brokerID = Integer.toString(brokersIndex++);
-                            String welcomeMessage =
-                                    "Yello, you are now connected to the router, your ID is " + brokerID + "\n";
-                            client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
-                            ClientAttachment clientAttachment = new ClientAttachment(client, brokerID);
-                            brokers.put(brokerID, clientAttachment);
-                            log.info("Connected Brokers " + brokers.entrySet());
-                            client.read(clientAttachment.buffer, clientAttachment, new BrokerHandler());
+                            if (brokersIndex < MAX_CLIENTS) {
+                                String brokerID = Integer.toString(brokersIndex++);
+                                String welcomeMessage =
+                                        "Yello, you are now connected to the router, your ID is " + brokerID + "\n";
+                                client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
+                                ClientAttachment clientAttachment = new ClientAttachment(client, brokerID);
+                                brokers.put(brokerID, clientAttachment);
+                                log.info("Connected Brokers " + brokers.entrySet());
+                                client.read(clientAttachment.buffer, clientAttachment, new BrokerHandler());
+                            } else {
+                                // TODO send reject message to client
+                                System.out.println("Maximum number of clients reached...try again later");
+                            }
                         } catch (InterruptedException | ExecutionException e) {
                             System.err.println("Something went wrong while trying to register a broker");
                         }
@@ -107,14 +112,19 @@ final class Server {
 
                     private void registerMarket(AsynchronousSocketChannel client) {
                         try {
-                            String marketID = Integer.toString(marketsIndex++);
-                            String welcomeMessage =
-                                    "Yello, you are now connected to the router, your ID is " + marketID + "\n";
-                            client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
-                            ClientAttachment clientAttachment = new ClientAttachment(client, marketID);
-                            markets.put(marketID, clientAttachment);
-                            log.info("Connected Markets" + brokers.entrySet());
-                            client.read(clientAttachment.buffer, clientAttachment, new MarketHandler());
+                            if (marketsIndex < MAX_CLIENTS) {
+                                String marketID = Integer.toString(marketsIndex++);
+                                String welcomeMessage =
+                                        "Yello, you are now connected to the router, your ID is " + marketID + "\n";
+                                client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
+                                ClientAttachment clientAttachment = new ClientAttachment(client, marketID);
+                                markets.put(marketID, clientAttachment);
+                                log.info("Connected Markets" + brokers.entrySet());
+                                client.read(clientAttachment.buffer, clientAttachment, new MarketHandler());
+                            } else {
+                                // TODO send reject message to client
+                                System.out.println("Maximum number of clients reached...try again later");
+                            }
                         } catch (InterruptedException | ExecutionException e) {
                              System.err.println("Something went wrong while trying to register a market");
                         }
