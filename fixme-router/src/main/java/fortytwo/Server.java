@@ -169,6 +169,7 @@ final class Server {
     private void sendToBroker(byte[] message) {
         try {
             FixMessage fixMessage = FixMsgFactory.createMsg(message);
+            log.info(fixMessage.getFixMsgString());
             FixUtils.valCheckSum(fixMessage.getFixMsgString());
             String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
             String targetID = fixMessage.msgMap.get(FixConstants.internalTargetIDTag);
