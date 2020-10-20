@@ -57,7 +57,6 @@ public class Market {
         int bytesRead = client.read(buffer).get();
         if (bytesRead == -1) {
             System.out.println("Server has disconnected.");
-            // Do other things
             this.client.close();
             System.exit(0);
         }
@@ -72,9 +71,7 @@ public class Market {
     }
 
     void readHandler() throws ExecutionException, InterruptedException, IOException {
-        String msgFromRouter;
         String senderId;
-        String response;
         String clientOrdId;
         int limit;
         byte[] bytes;
@@ -83,7 +80,6 @@ public class Market {
 
         if (bytesRead == -1) {
             System.out.println("Server has disconnected.");
-            // Do other things
             this.client.close();
             System.exit(0);
         }
@@ -112,7 +108,6 @@ public class Market {
                     this.marketId, senderId, clientOrdId
                 );
                 client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
-                // System.out.println(this.Stock.get(fixMsg.msgMap.get(FixConstants.symbolTag)));
                 return ;
               }
               else
@@ -134,23 +129,10 @@ public class Market {
               else
                 rejectHandler(resCode, senderId, clientOrdId);
             }
-            // FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
-            //         this.marketId, senderId, clientOrdId, "This is just a test"
-            // );
-            // client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
         }
         catch (FixFormatException | FixMessageException e) {
             System.out.println("There was an error building the FIX message: " + e.getMessage());
         }
-
-//        msgFromRouter = new String(FixUtils.insertPrintableDelimiter(bytes));
-//        System.out.println("Message from router: " + msgFromRouter);
-//        Matcher m = senderPattern.matcher(msgFromRouter);
-//        if (m.find()) {
-//            senderId = m.group(1);
-//            response = "\\" + senderId + " acknowledged\n";
-//            client.write(ByteBuffer.wrap(response.getBytes())).get();
-//        }
     }
 
     int MarketOps(HashMap<String, Integer> stock, String instrument, int amount, String op) {
@@ -176,18 +158,18 @@ public class Market {
     }
 
     void rejectHandler(int resCode, String senderId, String clientOrdId)
-        throws ExecutionException, InterruptedException, IOException {
+        throws ExecutionException, InterruptedException {
       try {
         if (resCode == 404) {
           FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
-            this.marketId, senderId, clientOrdId, "Instrument not stocked at " + this.marketId
+            this.marketId, senderId, clientOrdId, "Instrument not stocked at market# " + this.marketId
           );
           client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
           return ;
         }
         else if (resCode == 504) {
           FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
-            this.marketId, senderId, clientOrdId, "Instrument stock insufficient at " + this.marketId
+            this.marketId, senderId, clientOrdId, "Instrument stock insufficient at market#" + this.marketId
           );
           client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
           return ;

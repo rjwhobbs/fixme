@@ -134,7 +134,7 @@ public class Broker {
                     System.out.println(
                             "Here is your message preview: "
                             + FixUtils.fixMsgPreview(orderSide, brokerId, targetId, symbol, quantity, price)
-                            + "\nN.B Client order ID and checksum will be added once confirmed"
+                            + "\nNB: Client order ID and checksum will be added once confirmed"
                     );
                     System.out.println("Do you wish to continue with your transaction? (Y)es or (N)o");
                     if ((line = getNextLine()).toLowerCase().trim().equals("exit")) {
@@ -154,7 +154,7 @@ public class Broker {
                             i = 0;
                         }
                         catch (FixMessageException | FixFormatException e) {
-                            System.out.println("The was an error in your message:");
+                            System.out.println("There was an error in your message:");
                             System.out.println(e.getMessage());
                             fixMessage = null;
                             i = 0;
@@ -195,9 +195,10 @@ public class Broker {
         private void printMessage(byte[] message) {
             byte[] tempBytes = Arrays.copyOf(message, message.length);
             String rawMessage = new String(FixUtils.insertPrintableDelimiter(tempBytes));
-            String marketID = "";
-            String clientOrderID = "";
-            String rejectReason = "";
+            String marketID;
+            String clientOrderID;
+            String rejectReason;
+            String sender = "market";
 
             System.out.println("Raw message from server: " + rawMessage);
 
@@ -209,7 +210,10 @@ public class Broker {
                     System.out.println("Order #" + clientOrderID + " from market #" + marketID + " has been filled.");
                 }
                 else if (fixMessage.msgMap.get(FixConstants.execTypeTag).equals(FixConstants.ORDER_REJECTED)) {
-                    System.out.println("Order #" + clientOrderID + " from market #" + marketID + " has been rejected.");
+                    if (marketID.equals("100000")) {
+                        sender = "router";
+                    }
+                    System.out.println("Order #" + clientOrderID + " from " + sender + " #" + marketID + " has been rejected.");
                     rejectReason = fixMessage.msgMap.get(FixConstants.textTag);
                     if (rejectReason != null) {
                         System.out.println("Reject reason: " + rejectReason);

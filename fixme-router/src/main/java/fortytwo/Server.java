@@ -6,7 +6,6 @@ import fortytwo.fixexceptions.FixFormatException;
 import fortytwo.fixexceptions.FixMessageException;
 import fortytwo.utils.FixUtils;
 
-import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,34 +14,34 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 final class Server {
     private static final Logger log = Logger.getLogger("Logger").getParent();
     private final int MAX_CLIENTS = 999999;
+    private final int ROUTER_ID = 100000;
     private static BufferedReader blockerReader;
-    private static Pattern pattern;
     private static Executor pool;
     private static int brokersIndex;
     private static int marketsIndex;
     private static HashMap<String, ClientAttachment> brokers;
     private static HashMap<String, ClientAttachment> markets;
+    private MessageHandler dispatchOne = new DispatchOne();
+    private MessageHandler dispatchTwo = new DispatchTwo();
 
     public Server() {
         blockerReader = new BufferedReader(new InputStreamReader(System.in));
-        pattern = Pattern.compile("^\\\\(\\d+)\\s+(.+)");
         pool = Executors.newFixedThreadPool(200);
         brokers = new HashMap<>();
         markets = new HashMap<>();
-        brokersIndex = 100000;
-        marketsIndex = 100000;
+        brokersIndex = ROUTER_ID + 1;
+        marketsIndex = ROUTER_ID + 1;
+        dispatchOne.setSuccessor(dispatchTwo);
+        dispatchTwo.setSuccessor(null);
     }
 
     public void acceptBroker() {
@@ -55,7 +54,6 @@ final class Server {
                     public void completed(AsynchronousSocketChannel result, Object attachment) {
                         if (result.isOpen()) {
                             brokerChannel.accept(null, this);
-                            log.info("Broker Connected");
                             registerBroker(result);
                         }
                     }
@@ -69,7 +67,6 @@ final class Server {
                                 client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                                 ClientAttachment clientAttachment = new ClientAttachment(client, brokerID);
                                 brokers.put(brokerID, clientAttachment);
-                                log.info("Connected Brokers " + brokers.entrySet());
                                 client.read(clientAttachment.buffer, clientAttachment, new BrokerHandler());
                             } else {
                                 // TODO send reject message to client
@@ -105,7 +102,6 @@ final class Server {
                     public void completed(AsynchronousSocketChannel result, Object attachment) {
                         if (result.isOpen()) {
                             marketChannel.accept(null, this);
-                            log.info("Market Connected");
                             registerMarket(result);
                         }
                     }
@@ -119,7 +115,6 @@ final class Server {
                                 client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                                 ClientAttachment clientAttachment = new ClientAttachment(client, marketID);
                                 markets.put(marketID, clientAttachment);
-                                log.info("Connected Markets" + brokers.entrySet());
                                 client.read(clientAttachment.buffer, clientAttachment, new MarketHandler());
                             } else {
                                 // TODO send reject message to client
@@ -160,9 +155,9 @@ final class Server {
             FixUtils.valCheckSum(fixMessage.getFixMsgString());
             String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
             String targetID = fixMessage.msgMap.get(FixConstants.internalTargetIDTag);
-            pool.execute(new SendToMarket(message, senderID, targetID));
+            String clientOrdId = fixMessage.msgMap.get(FixConstants.clientOrdIDTag);
+            pool.execute(new SendToMarket(message, senderID, targetID, clientOrdId));
         } catch (FixCheckSumException e) {
-            //TODO display on the client
             System.err.println("Failed checksum " + e.getMessage());
         } catch (FixFormatException e) {
             System.err.println("Fix format exception " + e.getMessage());
@@ -174,7 +169,6 @@ final class Server {
     private void sendToBroker(byte[] message) {
         try {
             FixMessage fixMessage = FixMsgFactory.createMsg(message);
-            System.out.println(fixMessage.getFixMsgString());
             FixUtils.valCheckSum(fixMessage.getFixMsgString());
             String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
             String targetID = fixMessage.msgMap.get(FixConstants.internalTargetIDTag);
@@ -197,7 +191,8 @@ final class Server {
                     int limit = attachment.buffer.limit();
                     byte[] bytes = new byte[limit];
                     attachment.buffer.get(bytes, 0, limit);
-                    sendToMarket(bytes);
+//                    sendToMarket(bytes);
+                    dispatchOne.handleMessage(bytes, "broker");
                     attachment.buffer.clear();
                     attachment.client.read(attachment.buffer, attachment, this);
                 } else {
@@ -226,7 +221,8 @@ final class Server {
                     int limit = attachment.buffer.limit();
                     byte[] bytes = new byte[limit];
                     attachment.buffer.get(bytes, 0, limit);
-                    sendToBroker(bytes);
+//                    sendToBroker(bytes);
+                    dispatchOne.handleMessage(bytes, "market");
                     attachment.buffer.clear();
                     attachment.client.read(attachment.buffer, attachment, this);
                 } else {
@@ -248,11 +244,13 @@ final class Server {
         private byte[] message;
         private String senderID;
         private String targetID;
+        private String clientOrdId;
 
-        SendToMarket(byte[] message, String senderID, String targetID) {
+        SendToMarket(byte[] message, String senderID, String targetID, String clientOrdId) {
             this.message = message;
             this.senderID = senderID;
             this.targetID = targetID;
+            this.clientOrdId = clientOrdId;
         }
 
         @Override
@@ -262,17 +260,27 @@ final class Server {
                 if (clientAttachment != null && clientAttachment.client != null) {
                     clientAttachment.client.write(ByteBuffer.wrap(message)).get();
                 } else {
-                    printToSender("Market has disconnected.\n");
+                    FixMessage fixRejectMsg = FixMsgFactory.createExecRejectedMsg(
+                            Integer.toString(ROUTER_ID),
+                            senderID,
+                            clientOrdId,
+                            "Market #" + targetID + " is not available"
+                    );
+                    printToSender(fixRejectMsg);
                 }
             } catch (InterruptedException | ExecutionException e) {
+                System.err.println(e.getMessage());
+            } catch (FixFormatException e) {
+                System.err.println(e.getMessage());
+            } catch (FixMessageException e) {
                 System.err.println(e.getMessage());
             }
         }
 
-        private void printToSender(String msg) throws ExecutionException, InterruptedException {
+        private void printToSender(FixMessage fixMessage) throws ExecutionException, InterruptedException {
             ClientAttachment sendingClient = brokers.get(senderID);
             if (sendingClient != null) {
-                sendingClient.client.write(ByteBuffer.wrap(msg.getBytes())).get();
+                sendingClient.client.write(ByteBuffer.wrap(fixMessage.getRawFixMsgBytes())).get();
             }
         }
     }
@@ -308,6 +316,39 @@ final class Server {
                 sendingClient.client.write(ByteBuffer.wrap(msg.getBytes())).get();
             }
         }
+    }
+
+    abstract class MessageHandler {
+        MessageHandler successor;
+
+        void handleMessage(byte[] message, String from){};
+
+        public void setSuccessor(MessageHandler successor) {
+            this.successor = successor;
+        }
+    }
+
+    class DispatchOne extends MessageHandler {
+        @Override
+        void handleMessage(byte[] message, String from){
+            if (from.equals("broker")) {
+                sendToMarket(message);
+            }
+            else if (successor != null) {
+                successor.handleMessage(message, from);
+            }
+        };
+    }
+
+    class DispatchTwo extends MessageHandler {
+        void handleMessage(byte[] message, String from){
+            if (from.equals("market")) {
+                sendToBroker(message);
+            }
+            else if (successor != null) {
+                successor.handleMessage(message, from);
+            }
+        };
     }
 
 }
