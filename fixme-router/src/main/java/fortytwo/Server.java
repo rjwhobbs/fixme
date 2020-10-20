@@ -54,7 +54,6 @@ final class Server {
                     public void completed(AsynchronousSocketChannel result, Object attachment) {
                         if (result.isOpen()) {
                             brokerChannel.accept(null, this);
-                            log.info("Broker Connected");
                             registerBroker(result);
                         }
                     }
@@ -68,7 +67,6 @@ final class Server {
                                 client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                                 ClientAttachment clientAttachment = new ClientAttachment(client, brokerID);
                                 brokers.put(brokerID, clientAttachment);
-                                log.info("Connected Brokers " + brokers.entrySet());
                                 client.read(clientAttachment.buffer, clientAttachment, new BrokerHandler());
                             } else {
                                 // TODO send reject message to client
@@ -104,7 +102,6 @@ final class Server {
                     public void completed(AsynchronousSocketChannel result, Object attachment) {
                         if (result.isOpen()) {
                             marketChannel.accept(null, this);
-                            log.info("Market Connected");
                             registerMarket(result);
                         }
                     }
@@ -118,7 +115,6 @@ final class Server {
                                 client.write(ByteBuffer.wrap(welcomeMessage.getBytes())).get();
                                 ClientAttachment clientAttachment = new ClientAttachment(client, marketID);
                                 markets.put(marketID, clientAttachment);
-                                log.info("Connected Markets" + brokers.entrySet());
                                 client.read(clientAttachment.buffer, clientAttachment, new MarketHandler());
                             } else {
                                 // TODO send reject message to client
@@ -173,7 +169,6 @@ final class Server {
     private void sendToBroker(byte[] message) {
         try {
             FixMessage fixMessage = FixMsgFactory.createMsg(message);
-            System.out.println(fixMessage.getFixMsgString());
             FixUtils.valCheckSum(fixMessage.getFixMsgString());
             String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
             String targetID = fixMessage.msgMap.get(FixConstants.internalTargetIDTag);
@@ -322,6 +317,8 @@ final class Server {
             }
         }
     }
+
+//    private void send
 
     abstract class MessageHandler {
         MessageHandler successor;
