@@ -14,6 +14,7 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,12 +25,23 @@ public class Market {
             "^Yello, you are now connected to the router, your ID is (\\d+)"
     );
     private static String marketId;
+    private String[] instruments = {"Guitars", "Keyboards", "Basses", "Violins", "Saxophones"};
     private HashMap<String, Integer> Stock;
 
     Market() {
-        Stock = new HashMap<String, Integer>();
-        Stock.put("Guitars", 42);
-        Stock.put("Keyboards", 42);
+      Stock = new HashMap<String, Integer>();
+      int stockSelector;
+
+      for (int i = 0; i < 3; i++)
+      {
+        stockSelector = ThreadLocalRandom.current().nextInt(0, 5);
+        if (!Stock.containsKey(this.instruments[stockSelector]))
+          Stock.put(this.instruments[stockSelector], 50);
+        else
+          i--;
+      }
+      // varied markets test -- shows market stock -- feel free to comment out
+      System.out.println(Stock);
     }
 
     void start() throws IOException, ExecutionException, InterruptedException {
