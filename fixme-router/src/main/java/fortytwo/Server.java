@@ -318,8 +318,6 @@ final class Server {
         }
     }
 
-//    private void send
-
     abstract class MessageHandler {
         MessageHandler successor;
 
