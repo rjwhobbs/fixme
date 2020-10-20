@@ -6,7 +6,6 @@ import fortytwo.fixexceptions.FixFormatException;
 import fortytwo.fixexceptions.FixMessageException;
 import fortytwo.utils.FixUtils;
 
-import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,34 +14,33 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 final class Server {
     private static final Logger log = Logger.getLogger("Logger").getParent();
     private final int MAX_CLIENTS = 999999;
     private static BufferedReader blockerReader;
-    private static Pattern pattern;
     private static Executor pool;
     private static int brokersIndex;
     private static int marketsIndex;
     private static HashMap<String, ClientAttachment> brokers;
     private static HashMap<String, ClientAttachment> markets;
+    private MessageHandler dispatchOne = new DispatchOne();
+    private MessageHandler dispatchTwo = new DispatchTwo();
 
     public Server() {
         blockerReader = new BufferedReader(new InputStreamReader(System.in));
-        pattern = Pattern.compile("^\\\\(\\d+)\\s+(.+)");
         pool = Executors.newFixedThreadPool(200);
         brokers = new HashMap<>();
         markets = new HashMap<>();
         brokersIndex = 100000;
         marketsIndex = 100000;
+        dispatchOne.setSuccessor(dispatchTwo);
+        dispatchTwo.setSuccessor(null);
     }
 
     public void acceptBroker() {
@@ -196,7 +194,8 @@ final class Server {
                     int limit = attachment.buffer.limit();
                     byte[] bytes = new byte[limit];
                     attachment.buffer.get(bytes, 0, limit);
-                    sendToMarket(bytes);
+//                    sendToMarket(bytes);
+                    dispatchOne.handleMessage(bytes, "broker");
                     attachment.buffer.clear();
                     attachment.client.read(attachment.buffer, attachment, this);
                 } else {
@@ -225,7 +224,8 @@ final class Server {
                     int limit = attachment.buffer.limit();
                     byte[] bytes = new byte[limit];
                     attachment.buffer.get(bytes, 0, limit);
-                    sendToBroker(bytes);
+//                    sendToBroker(bytes);
+                    dispatchOne.handleMessage(bytes, "market");
                     attachment.buffer.clear();
                     attachment.client.read(attachment.buffer, attachment, this);
                 } else {
@@ -307,6 +307,39 @@ final class Server {
                 sendingClient.client.write(ByteBuffer.wrap(msg.getBytes())).get();
             }
         }
+    }
+
+    abstract class MessageHandler {
+        MessageHandler successor;
+
+        void handleMessage(byte[] message, String from){};
+
+        public void setSuccessor(MessageHandler successor) {
+            this.successor = successor;
+        }
+    }
+
+    class DispatchOne extends MessageHandler {
+        @Override
+        void handleMessage(byte[] message, String from){
+            if (from.equals("broker")) {
+                sendToMarket(message);
+            }
+            else if (successor != null) {
+                successor.handleMessage(message, from);
+            }
+        };
+    }
+
+    class DispatchTwo extends MessageHandler {
+        void handleMessage(byte[] message, String from){
+            if (from.equals("market")) {
+                sendToBroker(message);
+            }
+            else if (successor != null) {
+                successor.handleMessage(message, from);
+            }
+        };
     }
 
 }

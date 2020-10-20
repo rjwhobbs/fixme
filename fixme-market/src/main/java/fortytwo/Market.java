@@ -45,7 +45,6 @@ public class Market {
         int bytesRead = client.read(buffer).get();
         if (bytesRead == -1) {
             System.out.println("Server has disconnected.");
-            // Do other things
             this.client.close();
             System.exit(0);
         }
@@ -60,9 +59,7 @@ public class Market {
     }
 
     void readHandler() throws ExecutionException, InterruptedException, IOException {
-        String msgFromRouter;
         String senderId;
-        String response;
         String clientOrdId;
         int limit;
         byte[] bytes;
@@ -71,7 +68,6 @@ public class Market {
 
         if (bytesRead == -1) {
             System.out.println("Server has disconnected.");
-            // Do other things
             this.client.close();
             System.exit(0);
         }
@@ -87,43 +83,95 @@ public class Market {
             System.out.println("This was the raw message from the router: " + fixMsg.getFixMsgString());
             senderId = fixMsg.msgMap.get(FixConstants.internalSenderIDTag);
             clientOrdId = fixMsg.msgMap.get(FixConstants.clientOrdIDTag);
-            FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
-                    this.marketId, senderId, clientOrdId, "This is just a test"
-            );
-            client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+            int resCode = 0;
+            if (fixMsg.msgMap.get(FixConstants.sideTag).equals(FixConstants.BUY_SIDE)) {
+              resCode = MarketOps(
+                        this.Stock,
+                        fixMsg.msgMap.get(FixConstants.symbolTag),
+                        Integer.parseInt(fixMsg.msgMap.get(FixConstants.orderQtyTag)),
+                        "buy");
+
+              if (resCode == 420) {
+                FixMessage fixMsgResponse = FixMsgFactory.createExecFilledMsg(
+                    this.marketId, senderId, clientOrdId
+                );
+                client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+                return ;
+              }
+              else
+                rejectHandler(resCode, senderId, clientOrdId);
+            }
+            else if (fixMsg.msgMap.get(FixConstants.sideTag).equals(FixConstants.SELL_SIDE)) {
+              resCode = MarketOps(
+                        this.Stock,
+                        fixMsg.msgMap.get(FixConstants.symbolTag),
+                        Integer.parseInt(fixMsg.msgMap.get(FixConstants.orderQtyTag)),
+                        "sell");
+              if (resCode == 420) {
+                FixMessage fixMsgResponse = FixMsgFactory.createExecFilledMsg(
+                    this.marketId, senderId, clientOrdId
+                );
+                client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+                return ;
+              }
+              else
+                rejectHandler(resCode, senderId, clientOrdId);
+            }
         }
         catch (FixFormatException | FixMessageException e) {
             System.out.println("There was an error building the FIX message: " + e.getMessage());
         }
-
-//        msgFromRouter = new String(FixUtils.insertPrintableDelimiter(bytes));
-//        System.out.println("Message from router: " + msgFromRouter);
-//        Matcher m = senderPattern.matcher(msgFromRouter);
-//        if (m.find()) {
-//            senderId = m.group(1);
-//            response = "\\" + senderId + " acknowledged\n";
-//            client.write(ByteBuffer.wrap(response.getBytes())).get();
-//        }
     }
 
-    boolean MarketOps(HashMap<String, Integer> stock, String instrument, int amount, String op) {
+    int MarketOps(HashMap<String, Integer> stock, String instrument, int amount, String op) {
         if (stock.containsKey(instrument)) {
-            if (op.toLowerCase() == "buy") {
-                if (stock.get(instrument) < amount)
-                    return false;
-                else {
-                    stock.put(instrument, (stock.get(instrument) - amount));
-                    this.Stock = stock;
-                    return true;
+          if (op.toLowerCase() == "buy") {
+              if (stock.get(instrument) < amount)
+                return 504;
+              else {
+                  stock.put(instrument, (stock.get(instrument) - amount));
+                  this.Stock = stock;
+                  return 420;
                 }
             }
             else if (op.toLowerCase() == "sell") {
-                stock.put(instrument, (stock.get(instrument) + amount));
-                this.Stock = stock;
-                return true;
+              stock.put(instrument, (stock.get(instrument) + amount));
+              this.Stock = stock;
+              return 420;
             }
         }
-        return false;
+        else
+          return 404;
+      return -1;
+    }
+
+    void rejectHandler(int resCode, String senderId, String clientOrdId)
+        throws ExecutionException, InterruptedException {
+      try {
+        if (resCode == 404) {
+          FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
+            this.marketId, senderId, clientOrdId, "Instrument not stocked at market# " + this.marketId
+          );
+          client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+          return ;
+        }
+        else if (resCode == 504) {
+          FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
+            this.marketId, senderId, clientOrdId, "Instrument stock insufficient at market#" + this.marketId
+          );
+          client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+          return ;
+        }
+        else if (resCode == -1) {
+          FixMessage fixMsgResponse = FixMsgFactory.createExecRejectedMsg(
+            this.marketId, senderId, clientOrdId, "Aw hell, I dunno."
+          );
+          client.write(ByteBuffer.wrap(fixMsgResponse.getRawFixMsgBytes())).get();
+          return ;
+        }
+      } catch (FixFormatException | FixMessageException e) {
+        System.out.println("There was an error building the FIX message: " + e.getMessage());
+      }
     }
 
     public static void main(String[] args) {
