@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 final class Server {
     private static final Logger log = Logger.getLogger("Logger").getParent();
     private final int MAX_CLIENTS = 999999;
+    private final int ROUTER_ID = 100000;
     private static BufferedReader blockerReader;
     private static Executor pool;
     private static int brokersIndex;
@@ -37,8 +38,8 @@ final class Server {
         pool = Executors.newFixedThreadPool(200);
         brokers = new HashMap<>();
         markets = new HashMap<>();
-        brokersIndex = 100000;
-        marketsIndex = 100000;
+        brokersIndex = ROUTER_ID + 1;
+        marketsIndex = ROUTER_ID + 1;
         dispatchOne.setSuccessor(dispatchTwo);
         dispatchTwo.setSuccessor(null);
     }
@@ -158,7 +159,8 @@ final class Server {
             FixUtils.valCheckSum(fixMessage.getFixMsgString());
             String senderID = fixMessage.msgMap.get(FixConstants.internalSenderIDTag);
             String targetID = fixMessage.msgMap.get(FixConstants.internalTargetIDTag);
-            pool.execute(new SendToMarket(message, senderID, targetID));
+            String clientOrdId = fixMessage.msgMap.get(FixConstants.clientOrdIDTag);
+            pool.execute(new SendToMarket(message, senderID, targetID, clientOrdId));
         } catch (FixCheckSumException e) {
             //TODO display on the client
             System.err.println("Failed checksum " + e.getMessage());
@@ -248,11 +250,13 @@ final class Server {
         private byte[] message;
         private String senderID;
         private String targetID;
+        private String clientOrdId;
 
-        SendToMarket(byte[] message, String senderID, String targetID) {
+        SendToMarket(byte[] message, String senderID, String targetID, String clientOrdId) {
             this.message = message;
             this.senderID = senderID;
             this.targetID = targetID;
+            this.clientOrdId = clientOrdId;
         }
 
         @Override
@@ -262,17 +266,27 @@ final class Server {
                 if (clientAttachment != null && clientAttachment.client != null) {
                     clientAttachment.client.write(ByteBuffer.wrap(message)).get();
                 } else {
-                    printToSender("Market has disconnected.\n");
+                    FixMessage fixRejectMsg = FixMsgFactory.createExecRejectedMsg(
+                            Integer.toString(ROUTER_ID),
+                            senderID,
+                            clientOrdId,
+                            "Market #" + targetID + " is not available"
+                    );
+                    printToSender(fixRejectMsg);
                 }
             } catch (InterruptedException | ExecutionException e) {
+                System.err.println(e.getMessage());
+            } catch (FixFormatException e) {
+                System.err.println(e.getMessage());
+            } catch (FixMessageException e) {
                 System.err.println(e.getMessage());
             }
         }
 
-        private void printToSender(String msg) throws ExecutionException, InterruptedException {
+        private void printToSender(FixMessage fixMessage) throws ExecutionException, InterruptedException {
             ClientAttachment sendingClient = brokers.get(senderID);
             if (sendingClient != null) {
-                sendingClient.client.write(ByteBuffer.wrap(msg.getBytes())).get();
+                sendingClient.client.write(ByteBuffer.wrap(fixMessage.getRawFixMsgBytes())).get();
             }
         }
     }
