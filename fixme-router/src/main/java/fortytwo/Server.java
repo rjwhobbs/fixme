@@ -69,7 +69,6 @@ final class Server {
                                 brokers.put(brokerID, clientAttachment);
                                 client.read(clientAttachment.buffer, clientAttachment, new BrokerHandler());
                             } else {
-                                // TODO send reject message to client
                                 System.out.println("Maximum number of clients reached...try again later");
                             }
                         } catch (InterruptedException | ExecutionException e) {
@@ -117,7 +116,6 @@ final class Server {
                                 markets.put(marketID, clientAttachment);
                                 client.read(clientAttachment.buffer, clientAttachment, new MarketHandler());
                             } else {
-                                // TODO send reject message to client
                                 System.out.println("Maximum number of clients reached...try again later");
                             }
                         } catch (InterruptedException | ExecutionException e) {

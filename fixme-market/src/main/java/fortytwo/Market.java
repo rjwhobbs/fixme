@@ -24,7 +24,7 @@ public class Market {
     private static Pattern idPattern = Pattern.compile(
             "^Yello, you are now connected to the router, your ID is (\\d+)"
     );
-    private static String marketId;
+    private static String marketId = null;
     private String[] instruments = {"Guitars", "Keyboards", "Basses", "Violins", "Saxophones"};
     private double basePrice = 100.00;
     private HashMap<String, Integer> Stock;
@@ -67,7 +67,13 @@ public class Market {
       if (m.find()) {
         this.marketId = m.group(1);
       }
-      System.out.println("Market #" + this.marketId + " received");
+      if (this.marketId == null) {
+        System.out.println("Server might be full, please try again later. Closing...");
+        this.client.close();
+      }
+      else {
+        System.out.println("Market #" + this.marketId + " received");
+      }
     }
 
     void readHandler() throws ExecutionException, InterruptedException, IOException {

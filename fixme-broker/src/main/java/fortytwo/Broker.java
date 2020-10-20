@@ -26,7 +26,7 @@ public class Broker {
     private static Pattern idPattern = Pattern.compile(
             "^Yello, you are now connected to the router, your ID is (\\d+)"
     );
-    private static String brokerId;
+    private static String brokerId = null;
     private HashMap<String, Object> attachment = new HashMap<>();
     private static Boolean runInputReader = true;
 
@@ -52,7 +52,13 @@ public class Broker {
         if (m.find()) {
             this.brokerId = m.group(1);
         }
-        System.out.println("Broker id #" + this.brokerId + " received");
+        if (this.brokerId == null) {
+            System.out.println("Server might be full, please try again later. Closing...");
+            stop();
+        }
+        else {
+            System.out.println("Broker id #" + this.brokerId + " received");
+        }
     }
 
     private void readWriteHandler() {
