@@ -134,7 +134,7 @@ public class Broker {
                     System.out.println(
                             "Here is your message preview: "
                             + FixUtils.fixMsgPreview(orderSide, brokerId, targetId, symbol, quantity, price)
-                            + "\nN.B Client order ID and checksum will be added once confirmed"
+                            + "\nNB: Client order ID and checksum will be added once confirmed"
                     );
                     System.out.println("Do you wish to continue with your transaction? (Y)es or (N)o");
                     if ((line = getNextLine()).toLowerCase().trim().equals("exit")) {
