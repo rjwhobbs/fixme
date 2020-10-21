@@ -4,6 +4,7 @@ import fortytwo.constants.FixConstants;
 import fortytwo.fixexceptions.FixFormatException;
 import fortytwo.fixexceptions.FixMessageException;
 import fortytwo.utils.FixUtils;
+import fortytwo.data.DataBase;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -214,6 +215,9 @@ public class Broker {
                 clientOrderID = fixMessage.msgMap.get(FixConstants.clientOrdIDTag);
                 if (fixMessage.msgMap.get(FixConstants.execTypeTag).equals(FixConstants.ORDER_FILLED)) {
                     System.out.println("Order #" + clientOrderID + " from market #" + marketID + " has been filled.");
+                    DataBase.connect();
+                    DataBase.insert("None", "Order", "None");
+                    DataBase.close();
                 }
                 else if (fixMessage.msgMap.get(FixConstants.execTypeTag).equals(FixConstants.ORDER_REJECTED)) {
                     if (marketID.equals("100000")) {
