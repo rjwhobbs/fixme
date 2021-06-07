@@ -1,0 +1,12 @@
+# fixme
+Fixme, a project from the 42 curriculum.
+
+## Compilation
+Ensure that the maven build tool is installed https://maven.apache.org/install.html  
+Run `mvn clean package` in the root directory of the project.  
+
+## Run
+The project consists of three different progamms, the router, the market and the broker, each needs to be run seperately.  
+To start the router `cd fixme-router/target` then `java -jar fixmerouter.jar`  
+To start the market `cd fixme-market/target` then `java -jar fixmemarket.jar`  
+To start the broker `cd fixme-broker/target` then `java -jar fixmebroker.jar`
