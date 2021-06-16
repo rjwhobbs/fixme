@@ -1,6 +1,6 @@
 # fixme
 A simulated electronic trading experiment implementing a basic FIX trading protocol  
-consisting of three independentcomponents that comunicate over a network namely  
+consisting of three independent components that communicate over a network namely  
 the broker, market, and router. Focus is placed on multi-threaded network  
 applications with asynchronous sockets and the java executor framework.
 
