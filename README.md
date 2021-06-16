@@ -1,7 +1,8 @@
 # fixme
-A simulated electronic trading experiment implementing a basic FIX trading protocol consisting of three independent  
-components that comunicate over a network namely the broker, market, and router.  
-Focus is placed on multi-threaded network applications with asynchronous sockets and the java executor framework.
+A simulated electronic trading experiment implementing a basic FIX trading protocol  
+consisting of three independentcomponents that comunicate over a network namely  
+the broker, market, and router. Focus is placed on multi-threaded network  
+applications with asynchronous sockets and the java executor framework.
 
 ## Compilation
 Ensure that the maven build tool is installed https://maven.apache.org/install.html  
